@@ -4,7 +4,7 @@ import { pushToast } from '../toast/store'
 import { clearColorCache } from '../../lib/color'
 import { clearWaveformCache } from '../Waveform'
 
-const APP_VERSION = '0.0.0'
+const APP_VERSION = '0.1.0'
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
   return (

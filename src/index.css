@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+:root {
+  /* Dark, Spotify-class surfaces layered darkest→lightest */
+  --bg-app: #0A0A0A;
+  --bg-panel: #121212;
+  --bg-titlebar: #181818;
+  --bg-elevated: #1E1E1E;
+  --bg-hover: rgba(255, 255, 255, 0.08);
+  /* SoundCloud orange is the single signature accent */
+  --accent: #FF5500;
+  --accent-hover: #FF6A1F;
+  --text: #FFFFFF;
+  --text-dim: #A7A7A7;
+  --text-muted: #6A6A6A;
+  --border: rgba(255, 255, 255, 0.08);
+  --font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--bg-app);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--bg-app);
+  color: var(--text);
+}
+
+/* Thin, unobtrusive scrollbars in the dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes sk-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.sk-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.11) 37%, rgba(255,255,255,0.05) 63%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes anim-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes anim-slide-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.anim-fade-in { animation: anim-fade-in 160ms ease-out both; }
+.anim-slide-up { animation: anim-slide-up 200ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-shimmer { animation: none; }
+  .anim-fade-in, .anim-slide-up { animation: none; }
+}
+
+/* Type system — Inter pushed for personality */
+body { letter-spacing: -0.011em; }
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+}
+
+/* Now-playing equalizer (the "alive" cue on the current row) */
+@keyframes eq {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.eq > i {
+  width: 2px; height: 100%; background: var(--accent); border-radius: 1px;
+  transform-origin: bottom; animation: eq 0.9s ease-in-out infinite;
+}
+.eq > i:nth-child(2) { animation-delay: 0.25s; }
+.eq > i:nth-child(3) { animation-delay: 0.5s; }
+.eq > i:nth-child(4) { animation-delay: 0.15s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eq > i { animation: none; transform: scaleY(0.6); }
+}
+
+/* Forced reduce-motion via settings */
+.force-reduce-motion .sk-shimmer,
+.force-reduce-motion .anim-fade-in,
+.force-reduce-motion .anim-slide-up,
+.force-reduce-motion .eq > i {
+  animation: none !important;
+}
+.force-reduce-motion * {
+  transition-duration: 0.01ms !important;
+}

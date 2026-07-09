@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell, session, dialog } from 'electron'
 import { autoUpdater } from 'electron-updater'
+import log from 'electron-log'
 import path from 'node:path'
 import { CONFIG, loadUserConfig } from './config'
 import { initSettings, getSettings, setSettings, type Settings } from './settings'
@@ -85,6 +86,8 @@ ipcMain.on(IPC.WINDOW_MAXIMIZE, () => {
 })
 ipcMain.on(IPC.WINDOW_CLOSE, () => mainWindow?.close())
 ipcMain.handle(IPC.WINDOW_IS_MAXIMIZED, () => mainWindow?.isMaximized() ?? false)
+ipcMain.handle(IPC.UPDATE_CHECK, () => checkForUpdatesManual())
+ipcMain.handle(IPC.APP_VERSION, () => app.getVersion())
 
 // Player state from the renderer → Discord presence + tray.
 ipcMain.on(IPC.PLAYER_PROGRESS, (_e, snap: PlayerSnapshot | null) => {
@@ -184,29 +187,78 @@ async function setupPlayer() {
   initAutoUpdate()
 }
 
-// Check GitHub Releases for a newer version and install it on quit. Only runs in
-// packaged builds (no-op in dev). Prompts the user to restart once downloaded.
+// Broadcast update status to the renderer so Settings can show it / toast it.
+function sendUpdateStatus(state: string, extra: Record<string, unknown> = {}) {
+  mainWindow?.webContents.send(IPC.UPDATE_STATUS, { state, ...extra })
+}
+
+let updateDownloaded = false
+
+// Check GitHub Releases for a newer version. Only runs in packaged builds (no-op
+// in dev). Logs everything to a file (%AppData%/SoundCloud/logs) so failures on
+// a user's machine are diagnosable, surfaces status to the UI, and — because the
+// app lives in the tray and may never be explicitly quit — installs the update
+// as soon as it's downloaded (after a heads-up) rather than only on quit.
 function initAutoUpdate() {
   if (!app.isPackaged) return
+  autoUpdater.logger = log
+  log.transports.file.level = 'info'
   autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
+
+  autoUpdater.on('checking-for-update', () => sendUpdateStatus('checking'))
+  autoUpdater.on('update-not-available', (info) => sendUpdateStatus('up-to-date', { version: info?.version }))
+  autoUpdater.on('update-available', (info) => sendUpdateStatus('available', { version: info?.version }))
+  autoUpdater.on('download-progress', (p) => sendUpdateStatus('downloading', { percent: Math.round(p.percent) }))
+  autoUpdater.on('error', (err) => {
+    log.error('[updater] error', err)
+    sendUpdateStatus('error', { message: String(err?.message ?? err) })
+  })
+
   autoUpdater.on('update-downloaded', async (info) => {
+    updateDownloaded = true
+    sendUpdateStatus('downloaded', { version: info.version })
     const { response } = await dialog.showMessageBox({
       type: 'info',
-      buttons: ['Reiniciar agora', 'Depois'],
+      buttons: ['Reiniciar e atualizar', 'Depois'],
       defaultId: 0,
       cancelId: 1,
       title: 'Atualização disponível',
-      message: `SoundCloud ${info.version} baixado`,
-      detail: 'Reinicie para aplicar a atualização.',
+      message: `SoundCloud ${info.version} está pronto`,
+      detail: 'Reinicie agora para aplicar. Se escolher "Depois", será aplicado quando você fechar o app.',
     })
     if (response === 0) {
       quitting = true
-      autoUpdater.quitAndInstall()
+      // isSilent=false, isForceRunAfter=true → reopen the app after updating.
+      autoUpdater.quitAndInstall(false, true)
     }
   })
-  autoUpdater.checkForUpdates().catch(() => {
-    // offline / no release feed — ignore, try again next launch
-  })
+
+  const check = () =>
+    autoUpdater.checkForUpdates().catch((err) => {
+      log.error('[updater] check failed', err)
+      sendUpdateStatus('error', { message: String(err?.message ?? err) })
+    })
+  void check()
+  // Re-check every 3h so long-running tray sessions eventually pick up releases.
+  setInterval(check, 3 * 60 * 60 * 1000)
+}
+
+// Manual "check for updates" from Settings. Returns a short status string.
+export async function checkForUpdatesManual(): Promise<string> {
+  if (!app.isPackaged) return 'dev'
+  if (updateDownloaded) {
+    quitting = true
+    autoUpdater.quitAndInstall(false, true)
+    return 'installing'
+  }
+  try {
+    const r = await autoUpdater.checkForUpdates()
+    return r?.updateInfo?.version ? `checking:${r.updateInfo.version}` : 'checking'
+  } catch (err) {
+    log.error('[updater] manual check failed', err)
+    return 'error'
+  }
 }
 
 app.whenReady().then(() => setupPlayer())

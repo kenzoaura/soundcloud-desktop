@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Play, Pause, Heart, Repeat2, MessageCircle } from 'lucide-react'
+import { Play, Pause, Heart, Repeat2, MessageCircle, Plus } from 'lucide-react'
 import { useAsync } from '../useAsync'
 import Waveform from '../Waveform'
 import TrackList from '../TrackList'
 import { usePlayer } from '../../player/store'
+import { usePlaylistUi } from '../playlist/store'
 import { getCoverColor, rgbToCss, type RGB } from '../../lib/color'
 import { pushToast } from '../toast/store'
 import type { Track } from '../../../electron/sc/types'
@@ -210,6 +211,13 @@ export default function TrackView() {
                   label="Repostar"
                   activeLabel="Repostada"
                 />
+                <button
+                  onClick={() => usePlaylistUi.getState().openAdd(t)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-white/25 text-white bg-transparent hover:border-white transition-colors active:scale-95"
+                >
+                  <Plus size={16} />
+                  Adicionar
+                </button>
               </div>
             )}
           </div>

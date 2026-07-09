@@ -41,6 +41,7 @@ export interface User {
   followingsCount?: number
   likesCount?: number
   trackCount?: number
+  playlistCount?: number
   description?: string
   verified?: boolean
   city?: string

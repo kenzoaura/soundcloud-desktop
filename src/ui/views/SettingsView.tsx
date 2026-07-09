@@ -1,11 +1,10 @@
+import { useEffect, useState } from 'react'
 import { useSettings, type AppSettings } from '../../settings/store'
 import EqualizerPanel from '../EqualizerPanel'
 import { useT } from '../strings'
 import { pushToast } from '../toast/store'
 import { clearColorCache } from '../../lib/color'
 import { clearWaveformCache } from '../Waveform'
-
-const APP_VERSION = '0.1.0'
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -29,6 +28,44 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
       </div>
       <div className="shrink-0">{children}</div>
     </div>
+  )
+}
+
+function UpdateRow() {
+  const [version, setVersion] = useState('')
+  const [status, setStatus] = useState('')
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    window.updater.version().then(setVersion).catch(() => setVersion('?'))
+    window.updater.onStatus((s) => {
+      if (s.state === 'checking') setStatus('Verificando…')
+      else if (s.state === 'up-to-date') setStatus('Você está na versão mais recente')
+      else if (s.state === 'available') setStatus(`Baixando ${s.version ?? ''}…`)
+      else if (s.state === 'downloading') setStatus(`Baixando… ${s.percent ?? 0}%`)
+      else if (s.state === 'downloaded') setStatus(`Versão ${s.version ?? ''} pronta — reinicie para aplicar`)
+      else if (s.state === 'error') setStatus('Erro ao verificar atualização')
+    })
+  }, [])
+  const check = async () => {
+    if (busy) return
+    setBusy(true)
+    setStatus('Verificando…')
+    const r = await window.updater.check().catch(() => 'error')
+    setBusy(false)
+    if (r === 'dev') setStatus('Atualizações só em builds instalados')
+    else if (r === 'installing') setStatus('Instalando…')
+    else if (r === 'error') setStatus('Erro ao verificar')
+  }
+  return (
+    <Row label="Atualizações" hint={status || `Versão atual: ${version || '…'}`}>
+      <button
+        onClick={() => void check()}
+        disabled={busy}
+        className="px-4 py-1.5 rounded-full bg-[var(--bg-hover)] text-sm hover:bg-white/15 disabled:opacity-50"
+      >
+        {busy ? 'Verificando…' : 'Verificar'}
+      </button>
+    </Row>
   )
 }
 
@@ -156,7 +193,8 @@ export default function SettingsView() {
       </Section>
 
       <Section title={t('set.about')}>
-        <div className="text-sm text-[var(--text-dim)]">SoundCloud Desktop (unofficial) · v{APP_VERSION}</div>
+        <UpdateRow />
+        <div className="text-sm text-[var(--text-dim)] pt-3">SoundCloud Desktop (unofficial)</div>
       </Section>
     </section>
   )

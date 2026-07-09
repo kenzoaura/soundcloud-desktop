@@ -58,7 +58,7 @@ export default function LikesView() {
           subtitle="As faixas que você curtir no SoundCloud aparecem aqui."
         />
       ) : (
-        <TrackList tracks={tracks} header />
+        <TrackList tracks={tracks} header liked />
       )}
     </section>
   )

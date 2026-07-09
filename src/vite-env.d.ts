@@ -22,12 +22,19 @@ interface ScBridge {
   playlists(): Promise<ScPlaylist[]>
   likedPlaylists(): Promise<ScPlaylist[]>
   likePlaylist(id: number, like: boolean): Promise<boolean>
+  createPlaylist(title: string, isPublic: boolean, trackIds?: number[]): Promise<ScPlaylist | null>
+  addToPlaylist(playlistId: number, trackId: number): Promise<boolean>
+  removeFromPlaylist(playlistId: number, trackId: number): Promise<boolean>
+  renamePlaylist(id: number, title: string): Promise<boolean>
+  deletePlaylist(id: number): Promise<boolean>
   playlist(id: number): Promise<{ playlist: ScPlaylist; tracks: ScTrack[] } | null>
   feed(): Promise<ScTrack[]>
   user(id: number): Promise<ScUser | null>
   userTracks(id: number): Promise<ScTrack[]>
   userPlaylists(id: number): Promise<ScPlaylist[]>
   userLikes(id: number): Promise<ScTrack[]>
+  userFollowers(id: number): Promise<ScUser[]>
+  userFollowings(id: number): Promise<ScUser[]>
   home(): Promise<ScHomeSelection[]>
   playHistory(): Promise<ScTrack[]>
   tracksByIds(ids: number[]): Promise<ScTrack[]>
@@ -81,9 +88,22 @@ interface SettingsBridge {
   set(patch: Partial<AppSettings>): Promise<AppSettings>
 }
 
+interface UpdateStatus {
+  state: 'checking' | 'up-to-date' | 'available' | 'downloading' | 'downloaded' | 'error' | string
+  version?: string
+  percent?: number
+  message?: string
+}
+interface UpdaterBridge {
+  check(): Promise<string>
+  version(): Promise<string>
+  onStatus(cb: (s: UpdateStatus) => void): void
+}
+
 interface Window {
   windowControls: WindowControls
   sc: ScBridge
   player: PlayerBridge
   settings: SettingsBridge
+  updater: UpdaterBridge
 }

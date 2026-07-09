@@ -22,10 +22,15 @@ export default function TopBar() {
       className="h-14 shrink-0 flex items-center gap-3 pl-3 bg-[var(--bg-titlebar)] border-b border-[var(--border)]"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      <div className="flex items-center gap-2 select-none" style={noDrag}>
+      <button
+        onClick={() => navigate('/')}
+        className="flex items-center gap-2 select-none rounded-md px-1.5 py-1 -ml-1 hover:bg-white/10 transition-colors"
+        style={noDrag}
+        aria-label="Início"
+      >
         <Logo size={24} className="text-[var(--accent)]" />
         <span className="font-extrabold tracking-tight text-white max-[640px]:hidden">SoundCloud</span>
-      </div>
+      </button>
 
       <div className="flex items-center gap-1.5" style={noDrag}>
         <button

@@ -6,6 +6,7 @@ import ViewTransition from './ViewTransition'
 import Toaster from './toast/Toaster'
 import NowPlaying from './NowPlaying'
 import ContextMenu from './contextMenu/ContextMenu'
+import PlaylistModals from './playlist/PlaylistModals'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 import { usePlayer } from '../player/store'
 
@@ -35,6 +36,7 @@ export default function AppShell() {
       <Toaster />
       <NowPlaying />
       <ContextMenu />
+      <PlaylistModals />
     </div>
   )
 }

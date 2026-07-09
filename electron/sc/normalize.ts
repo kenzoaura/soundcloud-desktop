@@ -34,6 +34,7 @@ export function normalizeUser(raw: unknown): User | null {
     followingsCount: num(r.followings_count),
     likesCount: num(r.likes_count) ?? num(r.public_favorites_count),
     trackCount: num(r.track_count),
+    playlistCount: num(r.playlist_count),
     description: str(r.description),
     verified: r.verified === true,
     city: str(r.city),

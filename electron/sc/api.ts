@@ -1,4 +1,4 @@
-import { webWrite } from './webWrite'
+import { webWrite, webRequest } from './webWrite'
 import type { AuthSession } from '../auth/session'
 import type { ClientId } from './clientId'
 import type { Track, User, Playlist, HomeSelection, HomeItem, Comment, AppNotification } from './types'
@@ -377,6 +377,75 @@ export class ScApi {
     for (const raw of Array.isArray(data.collection) ? data.collection : []) {
       const t = normalizeTrack(raw)
       if (t) out.push(t)
+    }
+    return out
+  }
+
+  // --- Playlist CRUD (write; routed through webRequest to pass DataDome) ---
+
+  async createPlaylist(title: string, isPublic: boolean, trackIds: number[] = []): Promise<Playlist | null> {
+    const cid = await this.clientId.get()
+    const url = `${BASE}/playlists?client_id=${encodeURIComponent(cid)}`
+    const body = {
+      playlist: { title, sharing: isPublic ? 'public' : 'private', tracks: trackIds },
+    }
+    const { status, data } = await webRequest('POST', url, this.session.token(), body)
+    if (status < 200 || status >= 300) return null
+    return normalizePlaylist(data)
+  }
+
+  async addToPlaylist(playlistId: number, trackId: number): Promise<boolean> {
+    const ids = await this.playlistTrackIds(playlistId)
+    if (ids.includes(trackId)) return true
+    ids.push(trackId)
+    return this.putPlaylist(playlistId, { tracks: ids })
+  }
+
+  async removeFromPlaylist(playlistId: number, trackId: number): Promise<boolean> {
+    const ids = (await this.playlistTrackIds(playlistId)).filter((x) => x !== trackId)
+    return this.putPlaylist(playlistId, { tracks: ids })
+  }
+
+  async renamePlaylist(playlistId: number, title: string): Promise<boolean> {
+    return this.putPlaylist(playlistId, { title })
+  }
+
+  async deletePlaylist(playlistId: number): Promise<boolean> {
+    const status = await this.mutate('DELETE', `/playlists/${playlistId}`)
+    this.playlistCache.delete(playlistId)
+    return status >= 200 && status < 300
+  }
+
+  // The full current track-id list, needed because a playlist PUT replaces the
+  // whole track set (omitting ids would drop those tracks).
+  private async playlistTrackIds(id: number): Promise<number[]> {
+    const raw = (await this.get(`/playlists/${id}`)) as Record<string, unknown>
+    const list = Array.isArray(raw.tracks) ? (raw.tracks as Record<string, unknown>[]) : []
+    return list.map((t) => (typeof t.id === 'number' ? t.id : null)).filter((x): x is number => x !== null)
+  }
+
+  private async putPlaylist(id: number, patch: Record<string, unknown>): Promise<boolean> {
+    const cid = await this.clientId.get()
+    const url = `${BASE}/playlists/${id}?client_id=${encodeURIComponent(cid)}`
+    const { status } = await webRequest('PUT', url, this.session.token(), { playlist: patch })
+    this.playlistCache.delete(id) // force a fresh fetch next time it's opened
+    return status >= 200 && status < 300
+  }
+
+  async followers(id: number, limit = 60): Promise<User[]> {
+    return this.userList(`/users/${id}/followers`, limit)
+  }
+
+  async followings(id: number, limit = 60): Promise<User[]> {
+    return this.userList(`/users/${id}/followings`, limit)
+  }
+
+  private async userList(path: string, limit: number): Promise<User[]> {
+    const data = (await this.get(path, { limit })) as { collection?: unknown[] }
+    const out: User[] = []
+    for (const raw of Array.isArray(data.collection) ? data.collection : []) {
+      const u = normalizeUser(raw)
+      if (u) out.push(u)
     }
     return out
   }

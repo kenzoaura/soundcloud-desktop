@@ -49,12 +49,25 @@ export function registerScIpc(api: ScApi, clientId: ClientId, session: AuthSessi
   })
 
   ipcMain.handle(IPC.SC_LIKE_PLAYLIST, (_e, id: number, like: boolean) => api.likePlaylist(id, like))
+  ipcMain.handle(IPC.SC_CREATE_PLAYLIST, (_e, title: string, isPublic: boolean, trackIds?: number[]) =>
+    api.createPlaylist(title, isPublic, trackIds ?? []),
+  )
+  ipcMain.handle(IPC.SC_ADD_TO_PLAYLIST, (_e, playlistId: number, trackId: number) =>
+    api.addToPlaylist(playlistId, trackId),
+  )
+  ipcMain.handle(IPC.SC_REMOVE_FROM_PLAYLIST, (_e, playlistId: number, trackId: number) =>
+    api.removeFromPlaylist(playlistId, trackId),
+  )
+  ipcMain.handle(IPC.SC_RENAME_PLAYLIST, (_e, id: number, title: string) => api.renamePlaylist(id, title))
+  ipcMain.handle(IPC.SC_DELETE_PLAYLIST, (_e, id: number) => api.deletePlaylist(id))
   ipcMain.handle(IPC.SC_PLAYLIST, (_e, id: number) => api.playlist(id))
   ipcMain.handle(IPC.SC_FEED, () => api.feed())
   ipcMain.handle(IPC.SC_USER, (_e, id: number) => api.user(id))
   ipcMain.handle(IPC.SC_USER_TRACKS, (_e, id: number) => api.userTracks(id))
   ipcMain.handle(IPC.SC_USER_PLAYLISTS, (_e, id: number) => api.playlists(id))
   ipcMain.handle(IPC.SC_USER_LIKES, (_e, id: number) => api.likes(id))
+  ipcMain.handle(IPC.SC_USER_FOLLOWERS, (_e, id: number) => api.followers(id))
+  ipcMain.handle(IPC.SC_USER_FOLLOWINGS, (_e, id: number) => api.followings(id))
   ipcMain.handle(IPC.SC_HOME, () => api.home())
   ipcMain.handle(IPC.SC_PLAY_HISTORY, () => api.playHistory())
   ipcMain.handle(IPC.SC_TRACKS_BY_IDS, (_e, ids: number[]) => api.tracksByIds(ids))

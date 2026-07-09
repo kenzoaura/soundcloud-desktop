@@ -1,8 +1,17 @@
-import { Clock } from 'lucide-react'
 import type { Track } from '../../electron/sc/types'
 import TrackRow from './TrackRow'
 
-export default function TrackList({ tracks, header = false }: { tracks: Track[]; header?: boolean }) {
+export default function TrackList({
+  tracks,
+  header = false,
+  liked = false,
+  playlistId,
+}: {
+  tracks: Track[]
+  header?: boolean
+  liked?: boolean
+  playlistId?: number
+}) {
   if (tracks.length === 0) {
     return <div className="p-6 text-sm text-[var(--text-muted)]">Nada aqui ainda.</div>
   }
@@ -13,12 +22,12 @@ export default function TrackList({ tracks, header = false }: { tracks: Track[];
           <span className="text-right">#</span>
           <span />
           <span>Título</span>
-          <Clock size={14} className="mr-1" />
+          <span />
         </div>
       )}
       <div className="flex flex-col gap-0.5">
         {tracks.map((t, i) => (
-          <TrackRow key={`${t.id}-${i}`} tracks={tracks} index={i} />
+          <TrackRow key={`${t.id}-${i}`} tracks={tracks} index={i} liked={liked} playlistId={playlistId} />
         ))}
       </div>
     </div>

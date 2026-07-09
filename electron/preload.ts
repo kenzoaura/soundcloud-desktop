@@ -17,12 +17,22 @@ contextBridge.exposeInMainWorld('sc', {
   playlists: () => ipcRenderer.invoke(IPC.SC_PLAYLISTS),
   likedPlaylists: () => ipcRenderer.invoke(IPC.SC_LIKED_PLAYLISTS),
   likePlaylist: (id: number, like: boolean) => ipcRenderer.invoke(IPC.SC_LIKE_PLAYLIST, id, like),
+  createPlaylist: (title: string, isPublic: boolean, trackIds?: number[]) =>
+    ipcRenderer.invoke(IPC.SC_CREATE_PLAYLIST, title, isPublic, trackIds),
+  addToPlaylist: (playlistId: number, trackId: number) =>
+    ipcRenderer.invoke(IPC.SC_ADD_TO_PLAYLIST, playlistId, trackId),
+  removeFromPlaylist: (playlistId: number, trackId: number) =>
+    ipcRenderer.invoke(IPC.SC_REMOVE_FROM_PLAYLIST, playlistId, trackId),
+  renamePlaylist: (id: number, title: string) => ipcRenderer.invoke(IPC.SC_RENAME_PLAYLIST, id, title),
+  deletePlaylist: (id: number) => ipcRenderer.invoke(IPC.SC_DELETE_PLAYLIST, id),
   playlist: (id: number) => ipcRenderer.invoke(IPC.SC_PLAYLIST, id),
   feed: () => ipcRenderer.invoke(IPC.SC_FEED),
   user: (id: number) => ipcRenderer.invoke(IPC.SC_USER, id),
   userTracks: (id: number) => ipcRenderer.invoke(IPC.SC_USER_TRACKS, id),
   userPlaylists: (id: number) => ipcRenderer.invoke(IPC.SC_USER_PLAYLISTS, id),
   userLikes: (id: number) => ipcRenderer.invoke(IPC.SC_USER_LIKES, id),
+  userFollowers: (id: number) => ipcRenderer.invoke(IPC.SC_USER_FOLLOWERS, id),
+  userFollowings: (id: number) => ipcRenderer.invoke(IPC.SC_USER_FOLLOWINGS, id),
   home: () => ipcRenderer.invoke(IPC.SC_HOME),
   playHistory: () => ipcRenderer.invoke(IPC.SC_PLAY_HISTORY),
   tracksByIds: (ids: number[]) => ipcRenderer.invoke(IPC.SC_TRACKS_BY_IDS, ids),
@@ -53,4 +63,11 @@ contextBridge.exposeInMainWorld('player', {
 contextBridge.exposeInMainWorld('settings', {
   get: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
   set: (patch: unknown) => ipcRenderer.invoke(IPC.SETTINGS_SET, patch),
+})
+
+contextBridge.exposeInMainWorld('updater', {
+  check: () => ipcRenderer.invoke(IPC.UPDATE_CHECK),
+  version: () => ipcRenderer.invoke(IPC.APP_VERSION),
+  onStatus: (cb: (s: { state: string; version?: string; percent?: number; message?: string }) => void) =>
+    ipcRenderer.on(IPC.UPDATE_STATUS, (_e, s) => cb(s)),
 })

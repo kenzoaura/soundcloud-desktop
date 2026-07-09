@@ -4,10 +4,6 @@ A custom desktop client for SoundCloud — a Spotify-style UI backed by SoundClo
 internal API, with its own audio player, system tray, global media keys, and a
 Discord "Listening to SoundCloud" Rich Presence (cover art + live progress bar).
 
-> Unofficial and for personal use. It talks to SoundCloud's private API v2 (which
-> can change without notice) and "SoundCloud" is a trademark of SoundCloud Global
-> Limited — don't publish this under that name.
-
 ## Features
 
 - Log in with your real SoundCloud account (in-app login window; the session

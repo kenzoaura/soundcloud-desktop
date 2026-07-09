@@ -7,6 +7,7 @@ import PlaylistView from './ui/views/PlaylistView'
 import ArtistView from './ui/views/ArtistView'
 import TrackView from './ui/views/TrackView'
 import MixView from './ui/views/MixView'
+import ChartsView from './ui/views/ChartsView'
 import SettingsView from './ui/views/SettingsView'
 
 export const router = createHashRouter([
@@ -21,6 +22,7 @@ export const router = createHashRouter([
       { path: 'artist/:id', element: <ArtistView /> },
       { path: 'track/:id', element: <TrackView /> },
       { path: 'mix', element: <MixView /> },
+      { path: 'charts', element: <ChartsView /> },
       { path: 'settings', element: <SettingsView /> },
     ],
   },

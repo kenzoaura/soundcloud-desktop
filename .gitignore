@@ -5,7 +5,6 @@ node_modules/
 dist/
 dist-ssr/
 dist-electron/
-build/
 out/
 
 # Electron-builder output (installers, unpacked app — large binaries)

@@ -20,6 +20,7 @@ interface ScBridge {
   streamUrl(track: ScTrack): Promise<{ url: string; protocol: 'progressive' | 'hls' } | null>
   search(q: string): Promise<{ tracks: ScTrack[]; users: ScUser[]; playlists: ScPlaylist[] }>
   playlists(): Promise<ScPlaylist[]>
+  likedPlaylists(): Promise<ScPlaylist[]>
   playlist(id: number): Promise<{ playlist: ScPlaylist; tracks: ScTrack[] } | null>
   feed(): Promise<ScTrack[]>
   user(id: number): Promise<ScUser | null>
@@ -29,6 +30,7 @@ interface ScBridge {
   home(): Promise<ScHomeSelection[]>
   playHistory(): Promise<ScTrack[]>
   tracksByIds(ids: number[]): Promise<ScTrack[]>
+  genreTracks(term: string): Promise<ScTrack[]>
   track(id: number): Promise<ScTrack | null>
   trackRelated(id: number): Promise<ScTrack[]>
   trackComments(id: number): Promise<ScComment[]>
@@ -50,6 +52,7 @@ interface PlayerBridge {
       title: string
       artist: string
       artworkUrl?: string
+      url?: string
       durationSec: number
       positionSec: number
       isPlaying: boolean
@@ -68,6 +71,7 @@ interface AppSettings {
   notifications: boolean
   reduceMotion: boolean
   volume: number
+  autoplay: boolean
 }
 interface SettingsBridge {
   get(): Promise<AppSettings>

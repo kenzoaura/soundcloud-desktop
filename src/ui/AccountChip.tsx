@@ -44,7 +44,7 @@ export default function AccountChip() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-52 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] shadow-xl py-1 text-sm">
+        <div className="absolute right-0 top-full mt-2 z-50 w-52 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] shadow-xl py-1 text-sm anim-pop origin-top-right">
           <div className="px-3 py-2 border-b border-[var(--border)]">
             <div className="text-white truncate font-medium">{me?.username ?? 'Conta'}</div>
             <div className="text-[var(--text-muted)] text-xs">SoundCloud</div>

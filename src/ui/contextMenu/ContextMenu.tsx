@@ -42,7 +42,7 @@ export default function ContextMenu() {
     <div
       ref={ref}
       style={{ left: pos.x, top: pos.y }}
-      className="fixed z-[60] min-w-52 py-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] shadow-2xl text-sm anim-fade-in"
+      className="fixed z-[60] min-w-52 py-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] shadow-2xl text-sm anim-pop origin-top-left"
     >
       {items.map((it, i) => (
         <button

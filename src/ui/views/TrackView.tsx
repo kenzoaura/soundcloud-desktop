@@ -66,6 +66,16 @@ export default function TrackView() {
     else if (t) void playQueue([t], 0)
   }
 
+  // Comment markers plotted along the waveform at their timestamps.
+  const dur = t?.durationMs ?? 0
+  const commentMarkers =
+    dur > 0
+      ? (comments.data ?? [])
+          .filter((c) => c.atMs > 0 && c.atMs <= dur)
+          .slice(0, 60)
+          .map((c) => ({ fraction: c.atMs / dur, avatar: c.userAvatar, name: c.userName, body: c.body }))
+      : []
+
   return (
     <section>
       {/* Hero */}
@@ -73,7 +83,7 @@ export default function TrackView() {
         className="p-6"
         style={{ backgroundImage: `linear-gradient(180deg, ${rgbToCss(base, 0.6)}, transparent)` }}
       >
-        <div className="flex gap-5">
+        <div className="flex items-center gap-5">
           <button
             onClick={onPlay}
             className="w-16 h-16 shrink-0 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] grid place-items-center text-white shadow-lg hover:scale-105 transition"
@@ -81,8 +91,8 @@ export default function TrackView() {
           >
             {isCurrent && isPlaying ? <Pause size={26} fill="currentColor" /> : <Play size={26} fill="currentColor" />}
           </button>
-          <div className="flex-1 min-w-0">
-            <h1 className="display text-3xl truncate">{t?.title ?? '…'}</h1>
+          <div className="flex-1 min-w-0 pr-4">
+            <h1 className="display text-3xl leading-[1.08] break-words pr-1">{t?.title ?? '…'}</h1>
             {t && (
               <Link to={`/artist/${t.artistId}`} className="text-[var(--text-dim)] hover:text-white hover:underline">
                 {t.artist}
@@ -95,7 +105,7 @@ export default function TrackView() {
         </div>
 
         {t?.waveformUrl && (
-          <div className="mt-5">
+          <div className="mt-5 pb-3">
             <Waveform
               url={t.waveformUrl}
               progress={isCurrent && duration ? position / duration : 0}
@@ -105,6 +115,7 @@ export default function TrackView() {
               }}
               bars={200}
               className="h-16"
+              markers={commentMarkers}
             />
           </div>
         )}

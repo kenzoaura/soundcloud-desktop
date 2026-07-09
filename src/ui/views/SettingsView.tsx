@@ -1,4 +1,5 @@
 import { useSettings, type AppSettings } from '../../settings/store'
+import EqualizerPanel from '../EqualizerPanel'
 import { useT } from '../strings'
 import { pushToast } from '../toast/store'
 import { clearColorCache } from '../../lib/color'
@@ -95,9 +96,16 @@ export default function SettingsView() {
         <Row label={t('set.volume')} hint={`${Math.round(s.volume * 100)}%`}>
           <input type="range" min={0} max={1} step={0.01} value={s.volume} onChange={(e) => set('volume', Number(e.target.value))} className="w-40 accent-[var(--accent)]" />
         </Row>
+        <Row label={t('set.autoplay')} hint={t('set.autoplayHint')}>
+          <Toggle on={s.autoplay} onChange={(v) => set('autoplay', v)} />
+        </Row>
         <Row label={t('set.notifications')}>
           <Toggle on={s.notifications} onChange={(v) => set('notifications', v)} />
         </Row>
+      </Section>
+
+      <Section title="Equalizer">
+        <EqualizerPanel />
       </Section>
 
       <Section title={t('set.integration')}>

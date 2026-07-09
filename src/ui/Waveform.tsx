@@ -54,48 +54,92 @@ function downsample(peaks: number[], n: number): number[] {
   return out.map((v) => Math.pow(v / max, 0.85))
 }
 
+export interface WaveMarker {
+  fraction: number
+  avatar?: string
+  name: string
+  body: string
+}
+
 export default function Waveform({
   url,
   progress,
   onSeek,
   bars = 100,
   className = '',
+  markers,
 }: {
   url?: string
   progress: number
   onSeek: (fraction: number) => void
   bars?: number
   className?: string
+  markers?: WaveMarker[]
 }) {
   const peaks = useWaveform(url)
   const ref = useRef<HTMLDivElement>(null)
+  const [hover, setHover] = useState<number | null>(null)
   const data = peaks ? downsample(peaks, bars) : Array.from({ length: bars }, () => 0.18)
 
-  const seekAt = (clientX: number) => {
+  const fractionAt = (clientX: number): number => {
     const el = ref.current
-    if (!el) return
+    if (!el) return 0
     const r = el.getBoundingClientRect()
-    onSeek(Math.max(0, Math.min(1, (clientX - r.left) / r.width)))
+    return Math.max(0, Math.min(1, (clientX - r.left) / r.width))
   }
 
   return (
     <div
       ref={ref}
-      onClick={(e) => seekAt(e.clientX)}
-      className={`group flex items-center gap-[2px] cursor-pointer ${className}`}
+      onClick={(e) => onSeek(fractionAt(e.clientX))}
+      onMouseMove={(e) => setHover(fractionAt(e.clientX))}
+      onMouseLeave={() => setHover(null)}
+      className={`group relative flex items-center gap-[2px] cursor-pointer ${className}`}
     >
       {data.map((v, i) => {
-        const played = (i + 0.5) / data.length <= progress
+        const at = (i + 0.5) / data.length
+        const played = at <= progress
+        // Bars between the playhead and the cursor preview the seek target.
+        const previewed = hover !== null && at <= hover && !played
         return (
           <div
             key={i}
             style={{ height: `${Math.max(10, v * 100)}%` }}
-            className={`flex-1 rounded-full transition-colors ${
-              played ? 'bg-[var(--accent)]' : 'bg-white/20 group-hover:bg-white/30'
+            className={`flex-1 rounded-full transition-colors duration-75 ${
+              played
+                ? 'bg-[var(--accent)]'
+                : previewed
+                  ? 'bg-[var(--accent)]/50'
+                  : 'bg-white/20 group-hover:bg-white/30'
             }`}
           />
         )
       })}
+
+      {/* Comment markers along the timeline (SoundCloud-style) */}
+      {markers?.map((m, i) => (
+        <div
+          key={i}
+          className="absolute -bottom-1 -translate-x-1/2 z-10 group/mk"
+          style={{ left: `${m.fraction * 100}%` }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onSeek(m.fraction)
+          }}
+        >
+          <img
+            src={m.avatar}
+            className="w-4 h-4 rounded-full object-cover bg-white/10 ring-1 ring-black/60 hover:scale-125 transition-transform"
+          />
+          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max max-w-[220px] px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] shadow-xl opacity-0 group-hover/mk:opacity-100 transition-opacity pointer-events-none z-20">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <img src={m.avatar} className="w-4 h-4 rounded-full object-cover bg-white/10" />
+              <span className="text-xs font-semibold text-white truncate">{m.name}</span>
+            </div>
+            <div className="text-xs text-[var(--text-dim)] break-words">{m.body}</div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

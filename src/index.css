@@ -17,6 +17,13 @@
   --font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
 
+  /* Motion language: one set of curves + durations used app-wide */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* expo-out: quick start, soft land */
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1); /* subtle overshoot for pops */
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
+
   font-family: var(--font-body);
   color: var(--text);
   background: var(--bg-app);
@@ -73,14 +80,28 @@ body {
   background-size: 200% 100%;
   animation: sk-shimmer 1.4s ease-in-out infinite;
 }
-@keyframes anim-fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes anim-slide-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.anim-fade-in { animation: anim-fade-in 160ms ease-out both; }
-.anim-slide-up { animation: anim-slide-up 200ms ease-out both; }
+@keyframes anim-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes anim-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes anim-pop { from { opacity: 0; transform: scale(0.96) translateY(4px); } to { opacity: 1; transform: none; } }
+.anim-fade-in { animation: anim-fade-in var(--dur) var(--ease-out) both; }
+.anim-slide-up { animation: anim-slide-up var(--dur) var(--ease-out) both; }
+.anim-pop { animation: anim-pop var(--dur) var(--ease-spring) both; }
+
+/* Staggered list entrance: children rise in with a small cascade */
+.stagger-in > * { animation: anim-slide-up var(--dur) var(--ease-out) both; }
+.stagger-in > *:nth-child(1) { animation-delay: 20ms; }
+.stagger-in > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 80ms; }
+.stagger-in > *:nth-child(5) { animation-delay: 100ms; }
+.stagger-in > *:nth-child(6) { animation-delay: 120ms; }
+.stagger-in > *:nth-child(7) { animation-delay: 140ms; }
+.stagger-in > *:nth-child(8) { animation-delay: 160ms; }
+.stagger-in > *:nth-child(n+9) { animation-delay: 180ms; }
 
 @media (prefers-reduced-motion: reduce) {
   .sk-shimmer { animation: none; }
-  .anim-fade-in, .anim-slide-up { animation: none; }
+  .anim-fade-in, .anim-slide-up, .anim-pop, .stagger-in > * { animation: none; }
 }
 
 /* Type system — Inter pushed for personality */
@@ -121,6 +142,8 @@ body { letter-spacing: -0.011em; }
 .force-reduce-motion .sk-shimmer,
 .force-reduce-motion .anim-fade-in,
 .force-reduce-motion .anim-slide-up,
+.force-reduce-motion .anim-pop,
+.force-reduce-motion .stagger-in > *,
 .force-reduce-motion .eq > i {
   animation: none !important;
 }

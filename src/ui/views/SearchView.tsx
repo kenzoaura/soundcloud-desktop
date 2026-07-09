@@ -8,11 +8,14 @@ import type { Track, User, Playlist } from '../../../electron/sc/types'
 
 type Results = { tracks: Track[]; users: User[]; playlists: Playlist[] }
 
+type Tab = 'all' | 'tracks' | 'artists' | 'playlists'
+
 export default function SearchView() {
   const [params] = useSearchParams()
   const q = params.get('q') ?? ''
   const [res, setRes] = useState<Results | null>(null)
   const [loading, setLoading] = useState(false)
+  const [tab, setTab] = useState<Tab>('all')
 
   useEffect(() => {
     if (!q.trim()) {
@@ -51,13 +54,31 @@ export default function SearchView() {
 
       {loading && <TrackListSkeleton />}
 
-      {res && !loading && res.tracks.length === 0 && res.users.length === 0 && (
+      {res && !loading && res.tracks.length === 0 && res.users.length === 0 && res.playlists.length === 0 && (
         <EmptyState icon={<Search size={28} />} title="Nada encontrado" subtitle={`Sem resultados para "${q}"`} />
       )}
 
-      {res && !loading && (res.tracks.length > 0 || res.users.length > 0) && (
+      {res && !loading && (res.tracks.length > 0 || res.users.length > 0 || res.playlists.length > 0) && (
         <>
-          {res.users.length > 0 && (
+          <div className="flex gap-2 mb-5">
+            {([
+              ['all', 'Tudo'],
+              ['tracks', 'Faixas'],
+              ['artists', 'Artistas'],
+              ['playlists', 'Playlists'],
+            ] as [Tab, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${
+                  tab === key ? 'bg-white text-black' : 'text-[var(--text-dim)] hover:text-white hover:bg-[var(--bg-hover)]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {(tab === 'all' || tab === 'artists') && res.users.length > 0 && (
             <div className="pb-3">
               <h2 className="text-lg font-bold mb-3">Artistas</h2>
               <div className="flex gap-5 flex-wrap">
@@ -73,8 +94,29 @@ export default function SearchView() {
               </div>
             </div>
           )}
-          {res.tracks.length > 0 && <h2 className="text-lg font-bold pt-1">Faixas</h2>}
-          <TrackList tracks={res.tracks} />
+          {(tab === 'all' || tab === 'playlists') && res.playlists.length > 0 && (
+            <div className="pb-3">
+              <h2 className="text-lg font-bold mb-3">Playlists</h2>
+              <div className="grid grid-cols-2 min-[720px]:grid-cols-4 min-[1100px]:grid-cols-6 gap-4">
+                {res.playlists.slice(0, 12).map((p) => (
+                  <Link key={p.id} to={`/playlist/${p.id}`} className="group">
+                    <img
+                      src={p.artworkUrl}
+                      className="aspect-square w-full object-cover rounded-lg bg-white/5 shadow-lg group-hover:brightness-110 transition"
+                    />
+                    <div className="text-sm font-semibold truncate mt-2">{p.title}</div>
+                    <div className="text-xs text-[var(--text-dim)] truncate">{p.user} · {p.trackCount} faixas</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          {(tab === 'all' || tab === 'tracks') && res.tracks.length > 0 && (
+            <>
+              <h2 className="text-lg font-bold pt-1">Faixas</h2>
+              <TrackList tracks={res.tracks} />
+            </>
+          )}
         </>
       )}
     </section>

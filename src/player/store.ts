@@ -31,6 +31,15 @@ interface PlayerState {
   jumpTo: (index: number) => Promise<void>
   removeFromQueue: (index: number) => void
   clearQueue: () => void
+  setEq: (gains: number[]) => void
+}
+
+// Perceived loudness is roughly logarithmic, so a linear slider feels like most
+// of the change happens in the bottom half. Map the slider position (0..1) to an
+// exponential audio gain so each part of the slider sounds proportional.
+function perceptualGain(pos: number): number {
+  const p = Math.max(0, Math.min(1, pos))
+  return p * p
 }
 
 let engine: AudioEngine | null = null
@@ -42,6 +51,8 @@ let loadToken = 0
 let loadedId: number | null = null
 // Position to seek to on the next load (used to resume a restored session).
 let pendingSeek: number | null = null
+// Pre-resolved stream URL for the upcoming track, so advancing is instant.
+let preloaded: { id: number; resolved: { url: string; protocol: 'progressive' | 'hls' } } | null = null
 
 export const usePlayer = create<PlayerState>((set, get) => {
   const ensureEngine = () => {
@@ -54,13 +65,30 @@ export const usePlayer = create<PlayerState>((set, get) => {
     return engine
   }
 
+  // Resolve the upcoming track's stream URL ahead of time so a skip / natural
+  // advance starts instantly instead of waiting on a round-trip.
+  const prefetchNext = () => {
+    const { queue, repeat } = get()
+    const ni = nextIndex(queue, repeat)
+    if (ni === null) return
+    const nt = queue.tracks[ni]
+    if (!nt || preloaded?.id === nt.id) return
+    void window.sc
+      .streamUrl(nt)
+      .then((r) => {
+        if (r) preloaded = { id: nt.id, resolved: r }
+      })
+      .catch(() => {})
+  }
+
   const loadAndPlay = async (track: Track) => {
     const eng = ensureEngine()
-    eng.setVolume(get().volume)
+    eng.setVolume(perceptualGain(get().volume))
     const myToken = ++loadToken
     // Show the new track immediately; reset both position and duration.
     set({ current: track, position: 0, duration: 0 })
-    const resolved = await window.sc.streamUrl(track)
+    const resolved = preloaded?.id === track.id ? preloaded.resolved : await window.sc.streamUrl(track)
+    preloaded = null
     if (myToken !== loadToken) return // a newer track was requested; abandon this
     if (!resolved) {
       set({ isPlaying: false })
@@ -80,6 +108,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
       pendingSeek = null
       set({ isPlaying: true })
       addRecent(track)
+      prefetchNext()
       const st = currentSettings()
       if (st?.notifications && typeof Notification !== 'undefined') {
         try {
@@ -142,6 +171,21 @@ export const usePlayer = create<PlayerState>((set, get) => {
       const { queue, repeat } = get()
       const ni = nextIndex(queue, repeat)
       if (ni === null) {
+        // Autoplay/radio: when the queue ends, keep going with related tracks.
+        if (currentSettings()?.autoplay !== false && queue.tracks.length > 0) {
+          const cur = get().current ?? currentTrack(queue)
+          if (cur) {
+            const related = await window.sc.trackRelated(cur.id).catch(() => [])
+            const fresh = related.filter((r) => !queue.tracks.some((t) => t.id === r.id))
+            if (fresh.length) {
+              const nq = { tracks: [...queue.tracks, ...fresh], index: queue.tracks.length }
+              set({ queue: nq })
+              const t = currentTrack(nq)
+              if (t) await loadAndPlay(t)
+              return
+            }
+          }
+        }
         set({ isPlaying: false })
         return
       }
@@ -162,8 +206,9 @@ export const usePlayer = create<PlayerState>((set, get) => {
       set({ position: sec })
     },
     setVolume: (v) => {
-      ensureEngine().setVolume(v)
-      set({ volume: v })
+      const pos = Math.max(0, Math.min(1, v))
+      ensureEngine().setVolume(perceptualGain(pos))
+      set({ volume: pos })
     },
     toggleShuffle: () => {
       const { shuffle, queue } = get()
@@ -205,6 +250,9 @@ export const usePlayer = create<PlayerState>((set, get) => {
       const { queue } = get()
       // Keep the current track; drop everything queued after it.
       set({ queue: { tracks: queue.tracks.slice(0, queue.index + 1), index: queue.index } })
+    },
+    setEq: (gains) => {
+      ensureEngine().setEq(gains)
     },
   }
 })

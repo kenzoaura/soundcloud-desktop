@@ -11,6 +11,7 @@ export interface Settings {
   notifications: boolean
   reduceMotion: boolean
   volume: number // 0 .. 1
+  autoplay: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifications: false,
   reduceMotion: false,
   volume: 1,
+  autoplay: true,
 }
 
 // Pure: merge/sanitize arbitrary JSON into valid Settings.
@@ -39,6 +41,7 @@ export function mergeSettings(loaded: unknown): Settings {
     if (typeof r.notifications === 'boolean') out.notifications = r.notifications
     if (typeof r.reduceMotion === 'boolean') out.reduceMotion = r.reduceMotion
     if (typeof r.volume === 'number' && r.volume >= 0 && r.volume <= 1) out.volume = r.volume
+    if (typeof r.autoplay === 'boolean') out.autoplay = r.autoplay
   }
   return out
 }

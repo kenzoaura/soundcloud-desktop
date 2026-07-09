@@ -168,6 +168,16 @@ export class ScApi {
     return this.hydrateTracks(ids)
   }
 
+  // SoundCloud charts: kind 'top' (most played) or 'trending' (rising), for a
+  // genre urn like "soundcloud:genres:all-music". The collection embeds only
+  // stubs, so hydrate the ids for full track data.
+  // The v2 /charts endpoint is gated for our client_id (400/404), so "explore by
+  // genre" is backed by a search for the genre term, which is reliable.
+  async genreTracks(term: string, limit = 50): Promise<Track[]> {
+    const { tracks } = await this.search(term, limit)
+    return tracks
+  }
+
   async track(id: number): Promise<Track | null> {
     return normalizeTrack(await this.get(`/tracks/${id}`))
   }
@@ -256,6 +266,17 @@ export class ScApi {
       }
     }
     return { tracks, users, playlists }
+  }
+
+  // Playlists the user has liked (shown in the sidebar alongside own playlists).
+  async likedPlaylists(userId: number, limit = 50): Promise<Playlist[]> {
+    const data = (await this.get(`/users/${userId}/playlist_likes`, { limit })) as { collection?: unknown[] }
+    const out: Playlist[] = []
+    for (const it of Array.isArray(data.collection) ? data.collection : []) {
+      const p = normalizePlaylist((it as Record<string, unknown>)?.playlist ?? it)
+      if (p) out.push(p)
+    }
+    return out
   }
 
   async playlists(userId: number): Promise<Playlist[]> {

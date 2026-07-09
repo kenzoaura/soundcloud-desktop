@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import { initPlayerBridge } from './player/bridge'
 import { initSession } from './player/session'
+import './player/eq' // initialize + apply saved equalizer settings
 import { useSettings } from './settings/store'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'

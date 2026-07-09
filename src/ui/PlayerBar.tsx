@@ -52,16 +52,16 @@ export default function PlayerBar() {
       </button>
 
       {/* Controls */}
-      <div className="flex flex-col items-center gap-1.5">
-        <div className="flex items-center gap-5">
+      <div className="flex flex-col items-center justify-center gap-2 w-full max-w-[540px] mx-auto">
+        <div className="flex items-center gap-6">
           <button
             onClick={s.toggleShuffle}
-            className={s.shuffle ? 'text-[var(--accent)]' : 'text-[var(--text-dim)] hover:text-white'}
+            className={`transition-colors ${s.shuffle ? 'text-[var(--accent)]' : 'text-[var(--text-dim)] hover:text-white'}`}
             aria-label="Aleatório"
           >
             <Shuffle size={16} />
           </button>
-          <button onClick={() => void s.previous()} className="text-[var(--text-dim)] hover:text-white" aria-label="Anterior">
+          <button onClick={() => void s.previous()} className="text-[var(--text-dim)] hover:text-white transition-colors" aria-label="Anterior">
             <SkipBack size={18} fill="currentColor" />
           </button>
           <button
@@ -69,28 +69,30 @@ export default function PlayerBar() {
             className="w-9 h-9 rounded-full bg-white text-black grid place-items-center hover:scale-105 active:scale-95 transition-transform"
             aria-label={s.isPlaying ? 'Pausar' : 'Tocar'}
           >
-            {s.isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+            {s.isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
           </button>
-          <button onClick={() => void s.next()} className="text-[var(--text-dim)] hover:text-white" aria-label="Próxima">
+          <button onClick={() => void s.next()} className="text-[var(--text-dim)] hover:text-white transition-colors" aria-label="Próxima">
             <SkipForward size={18} fill="currentColor" />
           </button>
           <button
             onClick={s.cycleRepeat}
-            className={s.repeat !== 'off' ? 'text-[var(--accent)]' : 'text-[var(--text-dim)] hover:text-white'}
+            className={`transition-colors ${s.repeat !== 'off' ? 'text-[var(--accent)]' : 'text-[var(--text-dim)] hover:text-white'}`}
             aria-label="Repetir"
           >
             {s.repeat === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
           </button>
         </div>
-        <div className="w-full flex items-center gap-2">
-          <span className="text-[11px] text-[var(--text-muted)] w-9 text-right tabular-nums">{fmt(s.position)}</span>
+        {/* Fixed-height progress row so the layout never jumps between tracks
+            with and without a waveform. */}
+        <div className="w-full flex items-center gap-2.5 h-7">
+          <span className="text-[11px] text-[var(--text-muted)] w-9 text-right tabular-nums shrink-0">{fmt(s.position)}</span>
           {s.current.waveformUrl ? (
             <Waveform
               url={s.current.waveformUrl}
               progress={pct / 100}
               onSeek={(f) => s.seek(f * s.duration)}
-              bars={120}
-              className="flex-1 h-8"
+              bars={64}
+              className="flex-1 h-7"
             />
           ) : (
             <div className="flex-1 relative h-1 group">
@@ -114,7 +116,7 @@ export default function PlayerBar() {
               />
             </div>
           )}
-          <span className="text-[11px] text-[var(--text-muted)] w-9 tabular-nums">{fmt(s.duration)}</span>
+          <span className="text-[11px] text-[var(--text-muted)] w-9 tabular-nums shrink-0">{fmt(s.duration)}</span>
         </div>
       </div>
 

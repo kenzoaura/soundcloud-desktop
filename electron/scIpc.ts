@@ -40,6 +40,14 @@ export function registerScIpc(api: ScApi, clientId: ClientId, session: AuthSessi
     return userId === null ? [] : api.playlists(userId)
   })
 
+  ipcMain.handle(IPC.SC_LIKED_PLAYLISTS, async () => {
+    if (userId === null) {
+      const me = await api.me()
+      userId = me ? me.id : null
+    }
+    return userId === null ? [] : api.likedPlaylists(userId)
+  })
+
   ipcMain.handle(IPC.SC_PLAYLIST, (_e, id: number) => api.playlist(id))
   ipcMain.handle(IPC.SC_FEED, () => api.feed())
   ipcMain.handle(IPC.SC_USER, (_e, id: number) => api.user(id))
@@ -49,6 +57,7 @@ export function registerScIpc(api: ScApi, clientId: ClientId, session: AuthSessi
   ipcMain.handle(IPC.SC_HOME, () => api.home())
   ipcMain.handle(IPC.SC_PLAY_HISTORY, () => api.playHistory())
   ipcMain.handle(IPC.SC_TRACKS_BY_IDS, (_e, ids: number[]) => api.tracksByIds(ids))
+  ipcMain.handle(IPC.SC_GENRE_TRACKS, (_e, term: string) => api.genreTracks(term))
   ipcMain.handle(IPC.SC_TRACK, (_e, id: number) => api.track(id))
   ipcMain.handle(IPC.SC_TRACK_RELATED, (_e, id: number) => api.trackRelated(id))
   ipcMain.handle(IPC.SC_TRACK_COMMENTS, (_e, id: number) => api.trackComments(id))

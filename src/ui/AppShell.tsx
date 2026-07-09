@@ -23,10 +23,11 @@ export default function AppShell() {
           </ViewTransition>
         </main>
       </div>
-      {/* Player slides in/out: only present while a track is loaded */}
+      {/* Player slides in/out: only present while a track is loaded. Clip only
+          while collapsed/collapsing so the queue popover can overflow upward. */}
       <div
-        className={`shrink-0 overflow-hidden transition-[height,opacity] duration-300 ease-out ${
-          hasTrack ? 'h-20 opacity-100' : 'h-0 opacity-0'
+        className={`shrink-0 transition-[height,opacity] duration-300 ease-out ${
+          hasTrack ? 'h-20 opacity-100 overflow-visible' : 'h-0 opacity-0 overflow-hidden'
         }`}
       >
         <PlayerBar />

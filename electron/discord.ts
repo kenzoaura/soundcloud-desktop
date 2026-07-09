@@ -49,12 +49,14 @@ export class DiscordPresence {
     this.client.user
       .setActivity({
         type: a.type,
+        name: a.name,
         details: a.details,
         state: a.state,
         largeImageKey: a.largeImageKey,
         largeImageText: a.largeImageText,
         startTimestamp: a.startTimestamp,
         endTimestamp: a.endTimestamp,
+        buttons: a.buttons,
         instance: false,
       })
       .catch(() => {})

@@ -14,6 +14,7 @@ export function initPlayerBridge(): void {
       title: s.current.title,
       artist: s.current.artist,
       artworkUrl: s.current.artworkUrl,
+      url: s.current.permalink,
       durationSec: s.duration,
       positionSec: s.position,
       isPlaying: s.isPlaying,

@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain, shell, session } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, session, dialog } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import path from 'node:path'
 import { CONFIG, loadUserConfig } from './config'
 import { initSettings, getSettings, setSettings, type Settings } from './settings'
@@ -45,12 +46,16 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 function createPlayerWindow() {
+  const iconPath = VITE_DEV_SERVER_URL
+    ? path.join(process.env.APP_ROOT!, 'public', 'icon.png')
+    : path.join(RENDERER_DIST, 'icon.png')
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 720,
     minHeight: 520,
     frame: false,
+    icon: iconPath,
     backgroundColor: '#0A0A0A',
     webPreferences: { preload: path.join(__dirname, 'preload.js') },
   })
@@ -174,6 +179,32 @@ async function setupPlayer() {
     },
   })
   unregisterKeys = registerMediaKeys((cmd) => sendCommand(cmd))
+  initAutoUpdate()
+}
+
+// Check GitHub Releases for a newer version and install it on quit. Only runs in
+// packaged builds (no-op in dev). Prompts the user to restart once downloaded.
+function initAutoUpdate() {
+  if (!app.isPackaged) return
+  autoUpdater.autoDownload = true
+  autoUpdater.on('update-downloaded', async (info) => {
+    const { response } = await dialog.showMessageBox({
+      type: 'info',
+      buttons: ['Reiniciar agora', 'Depois'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Atualização disponível',
+      message: `SoundCloud ${info.version} baixado`,
+      detail: 'Reinicie para aplicar a atualização.',
+    })
+    if (response === 0) {
+      quitting = true
+      autoUpdater.quitAndInstall()
+    }
+  })
+  autoUpdater.checkForUpdates().catch(() => {
+    // offline / no release feed — ignore, try again next launch
+  })
 }
 
 app.whenReady().then(() => setupPlayer())

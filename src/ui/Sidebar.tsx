@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, Heart } from 'lucide-react'
+import { Home, Heart, Compass } from 'lucide-react'
 import type { Playlist } from '../../electron/sc/types'
 import { Skeleton } from './Skeleton'
 import { useT } from './strings'
@@ -17,10 +17,15 @@ export default function Sidebar() {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    window.sc
-      .playlists()
-      .then(setPlaylists)
-      .catch(() => {})
+    Promise.all([
+      window.sc.playlists().catch(() => [] as Playlist[]),
+      window.sc.likedPlaylists().catch(() => [] as Playlist[]),
+    ])
+      .then(([own, liked]) => {
+        // Own playlists first, then liked ones, de-duplicated by id.
+        const seen = new Set(own.map((p) => p.id))
+        setPlaylists([...own, ...liked.filter((p) => !seen.has(p.id))])
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -30,13 +35,17 @@ export default function Sidebar() {
         <Home size={18} />
         <span className="max-[900px]:hidden">{t('nav.home')}</span>
       </NavLink>
+      <NavLink to="/charts" className={cls}>
+        <Compass size={18} />
+        <span className="max-[900px]:hidden">{t('nav.charts')}</span>
+      </NavLink>
       <NavLink to="/likes" className={cls}>
         <Heart size={18} />
         <span className="max-[900px]:hidden">{t('nav.likes')}</span>
       </NavLink>
 
       <div className="mt-3 pt-3 border-t border-[var(--border)] flex-1 overflow-y-auto max-[900px]:hidden">
-        <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+        <div className="px-2 pb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--text-dim)]">
           {t('nav.playlists')}
         </div>
         {loading
@@ -51,16 +60,28 @@ export default function Sidebar() {
                 key={p.id}
                 to={`/playlist/${p.id}`}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors hover:bg-[var(--bg-hover)] ${
+                  `group flex items-center gap-3 px-2 py-1.5 rounded-md transition-colors hover:bg-[var(--bg-hover)] ${
                     isActive ? 'bg-[var(--bg-hover)]' : ''
                   }`
                 }
               >
-                <img src={p.artworkUrl} className="w-9 h-9 rounded object-cover bg-white/5 shrink-0" />
-                <div className="min-w-0">
-                  <div className="truncate text-[var(--text-dim)]">{p.title}</div>
-                  <div className="truncate text-[11px] text-[var(--text-muted)]">Playlist · {p.user}</div>
-                </div>
+                {({ isActive }) => (
+                  <>
+                    <img src={p.artworkUrl} className="w-11 h-11 rounded-md object-cover bg-white/5 shrink-0 shadow-sm" />
+                    <div className="min-w-0">
+                      <div
+                        className={`truncate text-sm font-semibold transition-colors ${
+                          isActive ? 'text-[var(--accent)]' : 'text-white'
+                        }`}
+                      >
+                        {p.title}
+                      </div>
+                      <div className="truncate text-xs text-[var(--text-dim)]">
+                        {p.trackCount > 0 ? `${p.trackCount} faixas` : 'Playlist'}
+                      </div>
+                    </div>
+                  </>
+                )}
               </NavLink>
             ))}
       </div>

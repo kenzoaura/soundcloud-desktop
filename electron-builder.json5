@@ -11,6 +11,11 @@
     "dist",
     "dist-electron"
   ],
+  "publish": {
+    "provider": "github",
+    "owner": "kenzoaura",
+    "repo": "soundcloud-desktop"
+  },
   "mac": {
     "target": [
       "dmg"
@@ -18,6 +23,7 @@
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {
+    "icon": "build/icon.ico",
     "target": [
       {
         "target": "nsis",
@@ -27,7 +33,9 @@
       }
     ],
     // Skip signing + rcedit so the build does not need the winCodeSign cache
-    // (which requires Windows Developer Mode to extract its symlinks).
+    // (which requires Windows Developer Mode to extract its symlinks). Note: the
+    // running app's taskbar icon comes from BrowserWindow `icon`; the .exe file
+    // icon needs rcedit (flip this to true) if desired.
     "signAndEditExecutable": false,
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
   },
@@ -35,7 +43,9 @@
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": false,
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico"
   },
   "linux": {
     "target": [

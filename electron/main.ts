@@ -8,6 +8,7 @@ import { TokenStore } from './auth/tokenStore'
 import { AuthSession } from './auth/session'
 import { ClientId } from './sc/clientId'
 import { ScApi } from './sc/api'
+import { warmupWrites } from './sc/webWrite'
 import { registerScIpc } from './scIpc'
 import { DiscordPresence } from './discord'
 import { createTray } from './tray'
@@ -160,6 +161,7 @@ async function setupPlayer() {
   await authSession.ensureAuth()
   const scApi = new ScApi(authSession, clientId)
   registerScIpc(scApi, clientId, authSession)
+  warmupWrites() // pre-load the DataDome window so the first like/follow is fast
   createPlayerWindow()
 
   discord = new DiscordPresence(CONFIG.discordClientId)

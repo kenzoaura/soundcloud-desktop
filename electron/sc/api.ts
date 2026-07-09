@@ -55,6 +55,12 @@ export class ScApi {
     return normalizeUser(await this.get('/me'))
   }
 
+  async likePlaylist(playlistId: number, like: boolean): Promise<boolean> {
+    const uid = await this.meId()
+    const status = await this.mutate(like ? 'PUT' : 'DELETE', `/users/${uid}/playlist_likes/${playlistId}`)
+    return status >= 200 && status < 300
+  }
+
   private async meId(): Promise<number> {
     const me = (await this.get('/me')) as { id?: number }
     if (typeof me.id !== 'number') throw new Error('no me id')
@@ -80,8 +86,21 @@ export class ScApi {
   // Ids of everyone the logged-in user follows, so the UI can show the right
   // follow-button state. Best-effort: returns [] if the endpoint is unavailable.
   async followingIds(): Promise<number[]> {
+    return this.idList('/me/followings/ids')
+  }
+
+  // Ids of tracks the user has liked / reposted, for correct button state.
+  async likedTrackIds(): Promise<number[]> {
+    return this.idList('/me/track_likes/ids')
+  }
+
+  async repostedTrackIds(): Promise<number[]> {
+    return this.idList('/me/track_reposts/ids')
+  }
+
+  private async idList(path: string): Promise<number[]> {
     try {
-      const data = (await this.get('/me/followings/ids', { limit: 5000 })) as { collection?: unknown }
+      const data = (await this.get(path, { limit: 5000 })) as { collection?: unknown }
       const arr = Array.isArray(data.collection) ? data.collection : []
       return arr.filter((x): x is number => typeof x === 'number')
     } catch {

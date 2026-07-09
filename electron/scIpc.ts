@@ -48,6 +48,7 @@ export function registerScIpc(api: ScApi, clientId: ClientId, session: AuthSessi
     return userId === null ? [] : api.likedPlaylists(userId)
   })
 
+  ipcMain.handle(IPC.SC_LIKE_PLAYLIST, (_e, id: number, like: boolean) => api.likePlaylist(id, like))
   ipcMain.handle(IPC.SC_PLAYLIST, (_e, id: number) => api.playlist(id))
   ipcMain.handle(IPC.SC_FEED, () => api.feed())
   ipcMain.handle(IPC.SC_USER, (_e, id: number) => api.user(id))
@@ -66,5 +67,7 @@ export function registerScIpc(api: ScApi, clientId: ClientId, session: AuthSessi
   ipcMain.handle(IPC.SC_REPOST_TRACK, (_e, id: number, repost: boolean) => api.repostTrack(id, repost))
   ipcMain.handle(IPC.SC_FOLLOW_USER, (_e, id: number, follow: boolean) => api.followUser(id, follow))
   ipcMain.handle(IPC.SC_FOLLOWING_IDS, () => api.followingIds())
+  ipcMain.handle(IPC.SC_LIKED_TRACK_IDS, () => api.likedTrackIds())
+  ipcMain.handle(IPC.SC_REPOSTED_TRACK_IDS, () => api.repostedTrackIds())
   ipcMain.handle(IPC.SC_NOTIFICATIONS, () => api.notifications())
 }

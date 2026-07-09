@@ -21,6 +21,7 @@ interface ScBridge {
   search(q: string): Promise<{ tracks: ScTrack[]; users: ScUser[]; playlists: ScPlaylist[] }>
   playlists(): Promise<ScPlaylist[]>
   likedPlaylists(): Promise<ScPlaylist[]>
+  likePlaylist(id: number, like: boolean): Promise<boolean>
   playlist(id: number): Promise<{ playlist: ScPlaylist; tracks: ScTrack[] } | null>
   feed(): Promise<ScTrack[]>
   user(id: number): Promise<ScUser | null>
@@ -39,6 +40,8 @@ interface ScBridge {
   repostTrack(id: number, repost: boolean): Promise<boolean>
   followUser(id: number, follow: boolean): Promise<boolean>
   followingIds(): Promise<number[]>
+  likedTrackIds(): Promise<number[]>
+  repostedTrackIds(): Promise<number[]>
   notifications(): Promise<ScNotification[]>
   logout(): Promise<void>
   openExternal(url: string): void

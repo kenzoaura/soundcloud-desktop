@@ -8,31 +8,34 @@ import { BrowserWindow } from 'electron'
 let win: BrowserWindow | null = null
 let loading: Promise<void> | null = null
 
+// DataDome sets its clearance cookie via JS a moment after the page loads, so we
+// wait a beat after load before considering the window write-ready.
+const SETTLE_MS = 1800
+
 function ensureWindow(): Promise<void> {
-  if (win && !win.isDestroyed()) return Promise.resolve()
-  if (loading) return loading
-  loading = new Promise((resolve, reject) => {
+  if (win && !win.isDestroyed() && loading) return loading
+  loading = new Promise((resolve) => {
     const w = new BrowserWindow({
       show: false,
       webPreferences: { partition: 'persist:sc' },
     })
     win = w
-    const done = () => {
-      w.webContents.off('did-fail-load', fail)
-      resolve()
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      setTimeout(resolve, SETTLE_MS)
     }
-    const fail = () => {
-      // Even a partial load leaves the origin usable for same-origin fetch.
-      resolve()
-    }
-    w.webContents.once('did-finish-load', done)
-    w.webContents.once('did-fail-load', fail)
-    w.loadURL('https://soundcloud.com/discover').catch(reject)
-  })
-  loading.finally(() => {
-    loading = null
+    w.webContents.once('did-finish-load', finish)
+    w.webContents.once('did-fail-load', finish) // partial load still clears DataDome
+    w.loadURL('https://soundcloud.com/discover').catch(finish)
   })
   return loading
+}
+
+// Pre-load the hidden window at startup so the first write isn't slow.
+export function warmupWrites(): void {
+  void ensureWindow()
 }
 
 export async function webWrite(method: string, url: string, token: string | null): Promise<number> {

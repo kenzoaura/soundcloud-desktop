@@ -7,6 +7,7 @@
   "directories": {
     "output": "release/${version}"
   },
+  "afterPack": "scripts/after-pack.cjs",
   "files": [
     "dist",
     "dist-electron"
@@ -32,10 +33,9 @@
         ]
       }
     ],
-    // Skip signing + rcedit so the build does not need the winCodeSign cache
-    // (which requires Windows Developer Mode to extract its symlinks). Note: the
-    // running app's taskbar icon comes from BrowserWindow `icon`; the .exe file
-    // icon needs rcedit (flip this to true) if desired.
+    // Signing/editing via electron-builder is skipped (it pulls winCodeSign,
+    // whose symlink extraction needs Developer Mode). The .exe icon is instead
+    // embedded by afterPack (scripts/after-pack.cjs) using rcedit directly.
     "signAndEditExecutable": false,
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
   },

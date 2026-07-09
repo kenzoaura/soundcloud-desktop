@@ -31,7 +31,11 @@ export function normalizeUser(raw: unknown): User | null {
     permalink: str(r.permalink_url) ?? '',
     bannerUrl: str(visualList[0]?.visual_url),
     followersCount: num(r.followers_count),
+    followingsCount: num(r.followings_count),
+    likesCount: num(r.likes_count) ?? num(r.public_favorites_count),
     trackCount: num(r.track_count),
+    description: str(r.description),
+    verified: r.verified === true,
     city: str(r.city),
     country: str(r.country_code),
   }

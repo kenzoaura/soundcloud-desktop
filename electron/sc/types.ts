@@ -38,7 +38,11 @@ export interface User {
   permalink: string
   bannerUrl?: string
   followersCount?: number
+  followingsCount?: number
+  likesCount?: number
   trackCount?: number
+  description?: string
+  verified?: boolean
   city?: string
   country?: string
 }

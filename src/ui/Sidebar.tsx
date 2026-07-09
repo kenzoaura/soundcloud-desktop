@@ -15,18 +15,49 @@ function cls({ isActive }: { isActive: boolean }) {
 export default function Sidebar() {
   const t = useT()
   const [playlists, setPlaylists] = useState<Playlist[]>([])
+  const [likedIds, setLikedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    Promise.all([
-      window.sc.playlists().catch(() => [] as Playlist[]),
-      window.sc.likedPlaylists().catch(() => [] as Playlist[]),
-    ])
-      .then(([own, liked]) => {
-        // Own playlists first, then liked ones, de-duplicated by id.
-        const seen = new Set(own.map((p) => p.id))
-        setPlaylists([...own, ...liked.filter((p) => !seen.has(p.id))])
+    const load = () => {
+      Promise.all([
+        window.sc.playlists().catch(() => [] as Playlist[]),
+        window.sc.likedPlaylists().catch(() => [] as Playlist[]),
+      ])
+        .then(([own, liked]) => {
+          // Own playlists first, then liked ones, de-duplicated by id.
+          const seen = new Set(own.map((p) => p.id))
+          const likedOnly = liked.filter((p) => !seen.has(p.id))
+          setPlaylists([...own, ...likedOnly])
+          setLikedIds(new Set(likedOnly.map((p) => p.id)))
+        })
+        .finally(() => setLoading(false))
+    }
+    load()
+    // Optimistic update on like/unlike so the sidebar reflects it instantly;
+    // fall back to a full reload when no playlist data is attached.
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { playlist?: Playlist; liked?: boolean } | undefined
+      if (!detail?.playlist) {
+        load()
+        return
+      }
+      const { playlist, liked } = detail
+      setPlaylists((prev) =>
+        liked
+          ? prev.some((p) => p.id === playlist.id)
+            ? prev
+            : [...prev, playlist]
+          : prev.filter((p) => p.id !== playlist.id),
+      )
+      setLikedIds((prev) => {
+        const n = new Set(prev)
+        if (liked) n.add(playlist.id)
+        else n.delete(playlist.id)
+        return n
       })
-      .finally(() => setLoading(false))
+    }
+    window.addEventListener('sc:playlists-changed', onChange)
+    return () => window.removeEventListener('sc:playlists-changed', onChange)
   }, [])
 
   return (
@@ -76,8 +107,17 @@ export default function Sidebar() {
                       >
                         {p.title}
                       </div>
-                      <div className="truncate text-xs text-[var(--text-dim)]">
-                        {p.trackCount > 0 ? `${p.trackCount} faixas` : 'Playlist'}
+                      <div className="truncate text-xs text-[var(--text-dim)] flex items-center gap-1">
+                        {likedIds.has(p.id) ? (
+                          <>
+                            <Heart size={11} className="text-[var(--accent)] shrink-0" fill="currentColor" />
+                            <span className="truncate">Curtida · {p.user}</span>
+                          </>
+                        ) : p.trackCount > 0 ? (
+                          `${p.trackCount} faixas`
+                        ) : (
+                          'Playlist'
+                        )}
                       </div>
                     </div>
                   </>

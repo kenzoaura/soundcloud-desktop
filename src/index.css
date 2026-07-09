@@ -87,6 +87,25 @@ body {
 .anim-slide-up { animation: anim-slide-up var(--dur) var(--ease-out) both; }
 .anim-pop { animation: anim-pop var(--dur) var(--ease-spring) both; }
 
+/* Satisfying pop when a like/repost toggles on */
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.4); }
+  55% { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+.like-pop { animation: like-pop 400ms var(--ease-spring) both; }
+@media (prefers-reduced-motion: reduce) { .like-pop { animation: none; } }
+
+/* Count bump when a stat (likes/reposts) changes */
+@keyframes stat-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); color: var(--accent); }
+  100% { transform: scale(1); }
+}
+.stat-bump { display: inline-block; animation: stat-bump 450ms var(--ease-spring) both; }
+@media (prefers-reduced-motion: reduce) { .stat-bump { animation: none; } }
+
 /* Staggered list entrance: children rise in with a small cascade */
 .stagger-in > * { animation: anim-slide-up var(--dur) var(--ease-out) both; }
 .stagger-in > *:nth-child(1) { animation-delay: 20ms; }
@@ -144,6 +163,8 @@ body { letter-spacing: -0.011em; }
 .force-reduce-motion .anim-slide-up,
 .force-reduce-motion .anim-pop,
 .force-reduce-motion .stagger-in > *,
+.force-reduce-motion .like-pop,
+.force-reduce-motion .stat-bump,
 .force-reduce-motion .eq > i {
   animation: none !important;
 }

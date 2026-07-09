@@ -6,7 +6,59 @@ import Waveform from '../Waveform'
 import TrackList from '../TrackList'
 import { usePlayer } from '../../player/store'
 import { getCoverColor, rgbToCss, type RGB } from '../../lib/color'
+import { pushToast } from '../toast/store'
 import type { Track } from '../../../electron/sc/types'
+
+function ActionButton({
+  active,
+  onToggle,
+  onChange,
+  icon,
+  activeIcon,
+  label,
+  activeLabel,
+}: {
+  active: boolean
+  onToggle: (next: boolean) => Promise<boolean>
+  onChange?: (on: boolean) => void
+  icon: React.ReactNode
+  activeIcon: React.ReactNode
+  label: string
+  activeLabel: string
+}) {
+  const [on, setOn] = useState(active)
+  const [busy, setBusy] = useState(false)
+  const [pop, setPop] = useState(0)
+  useEffect(() => setOn(active), [active]) // sync once the real state loads
+  const click = async () => {
+    if (busy) return
+    const next = !on
+    setOn(next)
+    onChange?.(next)
+    if (next) setPop((p) => p + 1) // retrigger the pop animation
+    setBusy(true)
+    const ok = await onToggle(next)
+    setBusy(false)
+    if (!ok) {
+      setOn(!next)
+      onChange?.(!next)
+      pushToast('Não consegui atualizar', 'error')
+    }
+  }
+  return (
+    <button
+      onClick={() => void click()}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors active:scale-95 ${
+        on
+          ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+          : 'bg-transparent border-white/25 text-white hover:border-white'
+      }`}
+    >
+      <span key={pop} className={`inline-flex ${pop ? 'like-pop' : ''}`}>{on ? activeIcon : icon}</span>
+      {on ? activeLabel : label}
+    </button>
+  )
+}
 
 function compact(n?: number): string {
   if (!n && n !== 0) return '0'
@@ -28,11 +80,27 @@ function relative(iso?: string): string {
   return `há ${years} ${years === 1 ? 'ano' : 'anos'}`
 }
 
-function Stat({ icon, value }: { icon: React.ReactNode; value: string }) {
+function Stat({
+  icon,
+  value,
+  bumpKey,
+  active,
+}: {
+  icon: React.ReactNode
+  value: string
+  bumpKey?: number
+  active?: boolean
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-sm text-[var(--text-dim)]">
+    <span
+      className={`inline-flex items-center gap-1.5 text-sm transition-colors ${
+        active ? 'text-[var(--accent)]' : 'text-[var(--text-dim)]'
+      }`}
+    >
       {icon}
-      {value}
+      <span key={bumpKey} className={bumpKey ? 'stat-bump' : undefined}>
+        {value}
+      </span>
     </span>
   )
 }
@@ -44,6 +112,8 @@ export default function TrackView() {
   const related = useAsync(() => window.sc.trackRelated(tid), [id])
   const comments = useAsync(() => window.sc.trackComments(tid), [id])
   const likers = useAsync(() => window.sc.trackLikers(tid), [id])
+  const likedIds = useAsync(() => window.sc.likedTrackIds(), [])
+  const repostedIds = useAsync(() => window.sc.repostedTrackIds(), [])
 
   const current = usePlayer((s) => s.current)
   const isPlaying = usePlayer((s) => s.isPlaying)
@@ -56,6 +126,15 @@ export default function TrackView() {
   const t: Track | null = track.data
   const isCurrent = current?.id === tid
   const [color, setColor] = useState<RGB | null>(null)
+  // Reflect like/repost on the stat counts, with a bump animation on change.
+  const initialLiked = (likedIds.data ?? []).includes(tid)
+  const initialReposted = (repostedIds.data ?? []).includes(tid)
+  const [likeOn, setLikeOn] = useState(false)
+  const [repostOn, setRepostOn] = useState(false)
+  const [likeBump, setLikeBump] = useState(0)
+  const [repostBump, setRepostBump] = useState(0)
+  useEffect(() => setLikeOn(initialLiked), [initialLiked])
+  useEffect(() => setRepostOn(initialReposted), [initialReposted])
   useEffect(() => {
     if (t?.artworkUrl) getCoverColor(t.artworkUrl).then(setColor)
   }, [t?.artworkUrl])
@@ -98,6 +177,41 @@ export default function TrackView() {
                 {t.artist}
               </Link>
             )}
+            {t && (
+              <div className="flex items-center gap-3 mt-4">
+                <ActionButton
+                  active={initialLiked}
+                  onToggle={async (next) => {
+                    const ok = await window.sc.likeTrack(tid, next)
+                    if (ok && t)
+                      window.dispatchEvent(
+                        new CustomEvent('sc:likes-changed', { detail: { track: t, liked: next } }),
+                      )
+                    return ok
+                  }}
+                  onChange={(on) => {
+                    setLikeOn(on)
+                    setLikeBump((b) => b + 1)
+                  }}
+                  icon={<Heart size={16} />}
+                  activeIcon={<Heart size={16} fill="currentColor" />}
+                  label="Curtir"
+                  activeLabel="Curtida"
+                />
+                <ActionButton
+                  active={initialReposted}
+                  onToggle={(next) => window.sc.repostTrack(tid, next)}
+                  onChange={(on) => {
+                    setRepostOn(on)
+                    setRepostBump((b) => b + 1)
+                  }}
+                  icon={<Repeat2 size={16} />}
+                  activeIcon={<Repeat2 size={16} />}
+                  label="Repostar"
+                  activeLabel="Repostada"
+                />
+              </div>
+            )}
           </div>
           {t?.artworkUrl && (
             <img src={t.artworkUrl} className="w-56 h-56 max-[1000px]:w-40 max-[1000px]:h-40 rounded-xl object-cover shadow-2xl shrink-0" />
@@ -122,8 +236,18 @@ export default function TrackView() {
 
         <div className="flex items-center gap-5 mt-4">
           <Stat icon={<Play size={14} />} value={compact(t?.playbackCount)} />
-          <Stat icon={<Heart size={14} />} value={compact(t?.likesCount)} />
-          <Stat icon={<Repeat2 size={14} />} value={compact(t?.repostsCount)} />
+          <Stat
+            icon={<Heart size={14} fill={likeOn ? 'currentColor' : 'none'} />}
+            value={compact((t?.likesCount ?? 0) + ((likeOn ? 1 : 0) - (initialLiked ? 1 : 0)))}
+            bumpKey={likeBump}
+            active={likeOn}
+          />
+          <Stat
+            icon={<Repeat2 size={14} />}
+            value={compact((t?.repostsCount ?? 0) + ((repostOn ? 1 : 0) - (initialReposted ? 1 : 0)))}
+            bumpKey={repostBump}
+            active={repostOn}
+          />
           <Stat icon={<MessageCircle size={14} />} value={compact(t?.commentCount)} />
           <span className="text-sm text-[var(--text-muted)] ml-auto">{relative(t?.createdAt)}</span>
         </div>

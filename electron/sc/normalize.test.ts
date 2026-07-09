@@ -53,8 +53,8 @@ describe('normalizeTrack', () => {
 
 describe('normalizeUser', () => {
   it('maps a user or returns null', () => {
-    expect(normalizeUser({ id: 9, username: 'A', permalink_url: 'https://soundcloud.com/a' })).toEqual({
-      id: 9, username: 'A', avatarUrl: undefined, permalink: 'https://soundcloud.com/a',
+    expect(normalizeUser({ id: 9, username: 'A', permalink_url: 'https://soundcloud.com/a' })).toMatchObject({
+      id: 9, username: 'A', permalink: 'https://soundcloud.com/a', verified: false,
     })
     expect(normalizeUser({ id: 9 })).toBeNull()
   })

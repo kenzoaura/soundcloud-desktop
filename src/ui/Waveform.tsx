@@ -117,29 +117,40 @@ export default function Waveform({
       })}
 
       {/* Comment markers along the timeline (SoundCloud-style) */}
-      {markers?.map((m, i) => (
-        <div
-          key={i}
-          className="absolute -bottom-1 -translate-x-1/2 z-10 group/mk"
-          style={{ left: `${m.fraction * 100}%` }}
-          onClick={(e) => {
-            e.stopPropagation()
-            onSeek(m.fraction)
-          }}
-        >
-          <img
-            src={m.avatar}
-            className="w-4 h-4 rounded-full object-cover bg-white/10 ring-1 ring-black/60 hover:scale-125 transition-transform"
-          />
-          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max max-w-[220px] px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] shadow-xl opacity-0 group-hover/mk:opacity-100 transition-opacity pointer-events-none z-20">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <img src={m.avatar} className="w-4 h-4 rounded-full object-cover bg-white/10" />
-              <span className="text-xs font-semibold text-white truncate">{m.name}</span>
+      {markers?.map((m, i) => {
+        // Anchor the tooltip so it never overflows the waveform edges.
+        const tip =
+          m.fraction < 0.2
+            ? 'left-0'
+            : m.fraction > 0.8
+              ? 'right-0'
+              : 'left-1/2 -translate-x-1/2'
+        return (
+          <div
+            key={i}
+            className="absolute -bottom-1 -translate-x-1/2 z-10 group/mk"
+            style={{ left: `${m.fraction * 100}%` }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onSeek(m.fraction)
+            }}
+          >
+            <img
+              src={m.avatar}
+              className="w-4 h-4 rounded-full object-cover bg-white/10 ring-1 ring-black/60 hover:scale-125 transition-transform"
+            />
+            <div
+              className={`absolute bottom-full mb-2 ${tip} w-max max-w-[220px] px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] shadow-xl opacity-0 group-hover/mk:opacity-100 transition-opacity pointer-events-none z-20`}
+            >
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <img src={m.avatar} className="w-4 h-4 rounded-full object-cover bg-white/10" />
+                <span className="text-xs font-semibold text-white truncate">{m.name}</span>
+              </div>
+              <div className="text-xs text-[var(--text-dim)] break-words">{m.body}</div>
             </div>
-            <div className="text-xs text-[var(--text-dim)] break-words">{m.body}</div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

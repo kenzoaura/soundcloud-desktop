@@ -1,8 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+export type ThemeId = 'dark' | 'slate' | 'warm' | 'violet' | 'ocean'
+
 export interface Settings {
   zoom: number // 0.8 .. 1.4
+  theme: ThemeId
   language: 'pt' | 'en'
   discordEnabled: boolean
   closeToTray: boolean
@@ -16,6 +19,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   zoom: 1,
+  theme: 'dark',
   language: 'pt',
   discordEnabled: true,
   closeToTray: true,
@@ -33,6 +37,8 @@ export function mergeSettings(loaded: unknown): Settings {
   if (loaded && typeof loaded === 'object') {
     const r = loaded as Record<string, unknown>
     if (typeof r.zoom === 'number' && r.zoom >= 0.5 && r.zoom <= 2) out.zoom = r.zoom
+    if (r.theme === 'dark' || r.theme === 'slate' || r.theme === 'warm' || r.theme === 'violet' || r.theme === 'ocean')
+      out.theme = r.theme
     if (r.language === 'pt' || r.language === 'en') out.language = r.language
     if (typeof r.discordEnabled === 'boolean') out.discordEnabled = r.discordEnabled
     if (typeof r.closeToTray === 'boolean') out.closeToTray = r.closeToTray

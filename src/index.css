@@ -1,19 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  /* Dark, Spotify-class surfaces layered darkest→lightest */
-  --bg-app: #0A0A0A;
-  --bg-panel: #121212;
-  --bg-titlebar: #181818;
-  --bg-elevated: #1E1E1E;
-  --bg-hover: rgba(255, 255, 255, 0.08);
-  /* SoundCloud orange is the single signature accent */
+  /* Default theme — Escuro (Laranja). Surfaces layered darkest→lightest with a
+     touch more depth + separation than a flat gray stack. Every theme below
+     overrides this same token set via [data-theme]. */
+  --bg-app: #000000;
+  --bg-panel: #0B0B0C;
+  --bg-titlebar: #101011;
+  --bg-elevated: #18181A;
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  /* SoundCloud orange is the signature accent; -deep drives accent gradients */
   --accent: #FF5500;
-  --accent-hover: #FF6A1F;
-  --text: #FFFFFF;
-  --text-dim: #A7A7A7;
-  --text-muted: #6A6A6A;
-  --border: rgba(255, 255, 255, 0.08);
+  --accent-hover: #FF6A24;
+  --accent-deep: #7A1F00;
+  --text: #F5F5F7;
+  --text-dim: #A7A7AE;
+  --text-muted: #6C6C73;
+  --border: rgba(255, 255, 255, 0.10);
   --font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
 
@@ -32,6 +35,65 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Themes — each overrides the surface/accent/text token set. Default (no attr)
+   is Escuro (Laranja) above. Selected in Settings, persisted, applied to <html>. */
+:root[data-theme="slate"] {
+  --bg-app: #0A0C10;
+  --bg-panel: #10131A;
+  --bg-titlebar: #161A22;
+  --bg-elevated: #1D222D;
+  --bg-hover: rgba(150, 170, 200, 0.10);
+  --accent: #FF5A1F;
+  --accent-hover: #FF7038;
+  --accent-deep: #7A2A0A;
+  --text: #EEF1F6;
+  --text-dim: #97A1B2;
+  --text-muted: #66707F;
+  --border: rgba(150, 170, 200, 0.14);
+}
+:root[data-theme="warm"] {
+  --bg-app: #0B0A09;
+  --bg-panel: #151210;
+  --bg-titlebar: #1B1714;
+  --bg-elevated: #241F1A;
+  --bg-hover: rgba(255, 220, 190, 0.08);
+  --accent: #FF5500;
+  --accent-hover: #FF6A24;
+  --accent-deep: #6E2A0A;
+  --text: #F7F3EF;
+  --text-dim: #B3A99F;
+  --text-muted: #78706A;
+  --border: rgba(255, 190, 140, 0.12);
+}
+:root[data-theme="violet"] {
+  --bg-app: #0B0A11;
+  --bg-panel: #131120;
+  --bg-titlebar: #191627;
+  --bg-elevated: #221E33;
+  --bg-hover: rgba(180, 160, 255, 0.10);
+  --accent: #8B5CF6;
+  --accent-hover: #9D74F8;
+  --accent-deep: #3B2569;
+  --text: #F1EFF7;
+  --text-dim: #A39FB8;
+  --text-muted: #726C86;
+  --border: rgba(160, 140, 220, 0.14);
+}
+:root[data-theme="ocean"] {
+  --bg-app: #06090D;
+  --bg-panel: #0D1319;
+  --bg-titlebar: #121A22;
+  --bg-elevated: #19242E;
+  --bg-hover: rgba(120, 180, 220, 0.10);
+  --accent: #22B8CF;
+  --accent-hover: #3CC9DE;
+  --accent-deep: #0E4A57;
+  --text: #ECF2F5;
+  --text-dim: #93A4B0;
+  --text-muted: #647581;
+  --border: rgba(120, 170, 210, 0.14);
 }
 
 * {
@@ -83,9 +145,26 @@ body {
 @keyframes anim-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes anim-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes anim-pop { from { opacity: 0; transform: scale(0.96) translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes anim-page { from { opacity: 0; transform: translateY(8px) scale(0.994); } to { opacity: 1; transform: none; } }
+@keyframes anim-scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
 .anim-fade-in { animation: anim-fade-in var(--dur) var(--ease-out) both; }
 .anim-slide-up { animation: anim-slide-up var(--dur) var(--ease-out) both; }
 .anim-pop { animation: anim-pop var(--dur) var(--ease-spring) both; }
+.anim-page { animation: anim-page 280ms var(--ease-out) both; }
+.anim-scale-in { animation: anim-scale-in var(--dur) var(--ease-spring) both; }
+
+/* Reusable interaction utilities ---------------------------------------- */
+/* Lift a card on hover with a soft shadow. */
+.hover-lift { transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
+.hover-lift:hover { transform: translateY(-4px); box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.65); }
+/* Tactile press: brief scale-down on click. Pair with any button. */
+.press { transition: transform var(--dur-fast) var(--ease-out); }
+.press:active { transform: scale(0.93); }
+/* Artwork zoom: wrap the image in an .art-zoom (overflow-hidden); it scales
+   when the enclosing .group is hovered. */
+.art-zoom { overflow: hidden; }
+.art-zoom img { transition: transform var(--dur-slow) var(--ease-out); will-change: transform; }
+.group:hover .art-zoom img { transform: scale(1.07); }
 
 /* Satisfying pop when a like/repost toggles on */
 @keyframes like-pop {
@@ -120,7 +199,8 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .sk-shimmer { animation: none; }
-  .anim-fade-in, .anim-slide-up, .anim-pop, .stagger-in > * { animation: none; }
+  .anim-fade-in, .anim-slide-up, .anim-pop, .anim-page, .anim-scale-in, .stagger-in > * { animation: none; }
+  .hover-lift:hover, .press:active, .group:hover .art-zoom img { transform: none; }
 }
 
 /* Type system — Inter pushed for personality */
@@ -162,11 +242,18 @@ body { letter-spacing: -0.011em; }
 .force-reduce-motion .anim-fade-in,
 .force-reduce-motion .anim-slide-up,
 .force-reduce-motion .anim-pop,
+.force-reduce-motion .anim-page,
+.force-reduce-motion .anim-scale-in,
 .force-reduce-motion .stagger-in > *,
 .force-reduce-motion .like-pop,
 .force-reduce-motion .stat-bump,
 .force-reduce-motion .eq > i {
   animation: none !important;
+}
+.force-reduce-motion .hover-lift:hover,
+.force-reduce-motion .press:active,
+.force-reduce-motion .group:hover .art-zoom img {
+  transform: none !important;
 }
 .force-reduce-motion * {
   transition-duration: 0.01ms !important;

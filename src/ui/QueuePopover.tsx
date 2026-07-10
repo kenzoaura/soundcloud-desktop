@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ListMusic, X, Volume2, Play, Pause } from 'lucide-react'
+import { ListMusic, X, Volume2, Play, Pause, GripVertical } from 'lucide-react'
 import { usePlayer } from '../player/store'
 
 function fmt(ms?: number): string {
@@ -14,8 +14,11 @@ export default function QueuePopover() {
   const toggle = usePlayer((s) => s.toggle)
   const jumpTo = usePlayer((s) => s.jumpTo)
   const removeFromQueue = usePlayer((s) => s.removeFromQueue)
+  const reorderQueue = usePlayer((s) => s.reorderQueue)
   const clearQueue = usePlayer((s) => s.clearQueue)
   const [open, setOpen] = useState(false)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -59,8 +62,30 @@ export default function QueuePopover() {
               return (
                 <div
                   key={`${t.id}-${i}`}
-                  className={`group flex items-center gap-3 px-3 py-2 ${isPast ? 'opacity-40' : ''} hover:bg-white/5`}
+                  draggable
+                  onDragStart={(e) => {
+                    setDragIndex(i)
+                    e.dataTransfer.effectAllowed = 'move'
+                  }}
+                  onDragEnter={() => setOverIndex(i)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDragEnd={() => {
+                    if (dragIndex !== null && overIndex !== null) reorderQueue(dragIndex, overIndex)
+                    setDragIndex(null)
+                    setOverIndex(null)
+                  }}
+                  className={`group flex items-center gap-2 px-3 py-2 hover:bg-white/5 ${
+                    isPast ? 'opacity-40' : ''
+                  } ${dragIndex === i ? 'opacity-30' : ''} ${
+                    overIndex === i && dragIndex !== null && dragIndex !== i
+                      ? 'border-t-2 border-[var(--accent)]'
+                      : 'border-t-2 border-transparent'
+                  }`}
                 >
+                  <GripVertical
+                    size={14}
+                    className="shrink-0 text-[var(--text-muted)] opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
+                  />
                   <div className="relative w-10 h-10 shrink-0">
                     <img src={t.artworkUrl} className="w-full h-full rounded object-cover bg-white/5" />
                     <button

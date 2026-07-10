@@ -6,6 +6,7 @@ import Waveform from '../Waveform'
 import TrackList from '../TrackList'
 import { usePlayer } from '../../player/store'
 import { usePlaylistUi } from '../playlist/store'
+import { useToggleSync } from '../useToggleSync'
 import { getCoverColor, rgbToCss, type RGB } from '../../lib/color'
 import { pushToast } from '../toast/store'
 import type { Track } from '../../../electron/sc/types'
@@ -27,28 +28,17 @@ function ActionButton({
   label: string
   activeLabel: string
 }) {
-  const [on, setOn] = useState(active)
-  const [busy, setBusy] = useState(false)
   const [pop, setPop] = useState(0)
-  useEffect(() => setOn(active), [active]) // sync once the real state loads
-  const click = async () => {
-    if (busy) return
-    const next = !on
-    setOn(next)
-    onChange?.(next)
-    if (next) setPop((p) => p + 1) // retrigger the pop animation
-    setBusy(true)
-    const ok = await onToggle(next)
-    setBusy(false)
-    if (!ok) {
-      setOn(!next)
-      onChange?.(!next)
-      pushToast('Não consegui atualizar', 'error')
-    }
-  }
+  const { on, toggle } = useToggleSync(active, onToggle, {
+    onChange: (next) => {
+      if (next) setPop((p) => p + 1) // retrigger the pop animation
+      onChange?.(next)
+    },
+    onFail: () => pushToast('Não consegui atualizar', 'error'),
+  })
   return (
     <button
-      onClick={() => void click()}
+      onClick={toggle}
       className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors active:scale-95 ${
         on
           ? 'bg-[var(--accent)] border-[var(--accent)] text-white'

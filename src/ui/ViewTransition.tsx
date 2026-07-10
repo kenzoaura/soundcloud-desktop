@@ -5,7 +5,7 @@ export default function ViewTransition({ children }: { children: React.ReactNode
   const location = useLocation()
   const reduced = useReducedMotion()
   return (
-    <div key={location.pathname} className={reduced ? '' : 'anim-fade-in'}>
+    <div key={location.pathname} className={reduced ? '' : 'anim-page'}>
       {children}
     </div>
   )

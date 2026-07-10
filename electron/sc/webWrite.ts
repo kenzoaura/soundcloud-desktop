@@ -1,4 +1,5 @@
 import { BrowserWindow, net, session } from 'electron'
+import log from 'electron-log'
 
 // SoundCloud guards its write endpoints (like/follow/repost) with DataDome, an
 // anti-bot that rejects requests lacking a browser's cleared cookie + JS
@@ -8,9 +9,27 @@ import { BrowserWindow, net, session } from 'electron'
 let win: BrowserWindow | null = null
 let loading: Promise<void> | null = null
 
-// DataDome sets its clearance cookie via JS a moment after the page loads, so we
-// wait a beat after load before considering the window write-ready.
-const SETTLE_MS = 1800
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+// Wait until DataDome has actually set its clearance cookie, rather than a fixed
+// delay: on slower machines/connections the cookie can take several seconds, and
+// writing before it lands gets a 403. Falls back after a generous timeout.
+async function waitForClearance(): Promise<void> {
+  const ses = session.fromPartition('persist:sc')
+  const deadline = Date.now() + 12000
+  while (Date.now() < deadline) {
+    try {
+      const cookies = await ses.cookies.get({ name: 'datadome' })
+      if (cookies.length > 0) {
+        await delay(400) // small extra beat after it appears
+        return
+      }
+    } catch {
+      /* ignore and retry */
+    }
+    await delay(300)
+  }
+}
 
 function ensureWindow(): Promise<void> {
   if (win && !win.isDestroyed() && loading) return loading
@@ -24,7 +43,7 @@ function ensureWindow(): Promise<void> {
     const finish = () => {
       if (settled) return
       settled = true
-      setTimeout(resolve, SETTLE_MS)
+      void waitForClearance().then(() => resolve())
     }
     w.webContents.once('did-finish-load', finish)
     w.webContents.once('did-fail-load', finish) // partial load still clears DataDome
@@ -43,18 +62,16 @@ export async function webWrite(method: string, url: string, token: string | null
   return status
 }
 
-// Like webWrite but sends an optional JSON body and returns the parsed response
-// body alongside the status (needed e.g. to read the id of a created playlist).
-export async function webRequest(
+// One attempt of the actual request. Bodyless writes go through the page's own
+// fetch; JSON-body writes go via net.request (DataDome corrupts fetch bodies).
+async function sendOnce(
   method: string,
   url: string,
   token: string | null,
-  body?: unknown,
+  body: unknown,
 ): Promise<{ status: number; data: unknown }> {
-  await ensureWindow()
   if (!win || win.isDestroyed()) return { status: -1, data: null }
 
-  // Bodyless writes (like/follow/repost) pass fine through the page's fetch.
   if (body === undefined) {
     const hdr = token ? `{ 'Authorization': 'OAuth ' + ${JSON.stringify(token)} }` : '{}'
     const js = `fetch(${JSON.stringify(url)}, { method: ${JSON.stringify(
@@ -69,13 +86,9 @@ export async function webRequest(
     }
   }
 
-  // JSON-body writes (playlist create/edit) can't go through the page: DataDome
-  // wraps fetch/XHR and corrupts the body. Send them via net.request on the same
-  // session so no page JS touches the body; the DataDome clearance cookie set by
-  // the hidden window rides along automatically via useSessionCookies.
   const ua = win.webContents.getUserAgent()
   const payload = JSON.stringify(body)
-  return new Promise<{ status: number; data: unknown }>((resolve) => {
+  return new Promise((resolve) => {
     const req = net.request({
       method,
       url,
@@ -105,4 +118,27 @@ export async function webRequest(
     req.write(payload)
     req.end()
   })
+}
+
+// Like webWrite but sends an optional JSON body and returns the parsed response
+// body alongside the status (needed e.g. to read the id of a created playlist).
+// Retries once on a transient failure (403/blocked/-1) after re-waiting for the
+// DataDome clearance cookie — the common cause of writes failing on some
+// machines is the cookie simply not having landed yet.
+export async function webRequest(
+  method: string,
+  url: string,
+  token: string | null,
+  body?: unknown,
+): Promise<{ status: number; data: unknown }> {
+  await ensureWindow()
+  let res = await sendOnce(method, url, token, body)
+  if (res.status === 403 || res.status === -1) {
+    log.warn('[webWrite] retry after', res.status, method, url)
+    await waitForClearance()
+    await delay(600)
+    res = await sendOnce(method, url, token, body)
+  }
+  log.info('[webWrite]', method, url, '->', res.status)
+  return res
 }

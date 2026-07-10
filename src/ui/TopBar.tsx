@@ -58,7 +58,7 @@ export default function TopBar() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={t('search.placeholder')}
-              className="w-full pl-11 pr-4 py-2.5 rounded-full bg-white/10 border border-white/15 text-sm text-white placeholder-[var(--text-dim)] outline-none focus:bg-white/15 focus:border-[var(--accent)] transition-colors"
+              className="w-full pl-11 pr-4 py-2.5 rounded-full bg-white/[0.04] border border-white/10 text-sm text-white placeholder-[var(--text-dim)] outline-none focus:bg-white/[0.07] focus:border-[var(--accent)] transition-colors"
             />
           </div>
         </form>

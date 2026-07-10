@@ -1,10 +1,45 @@
 import { useEffect, useState } from 'react'
-import { useSettings, type AppSettings } from '../../settings/store'
+import { useSettings, type AppSettings, type ThemeId } from '../../settings/store'
 import EqualizerPanel from '../EqualizerPanel'
 import { useT } from '../strings'
 import { pushToast } from '../toast/store'
 import { clearColorCache } from '../../lib/color'
 import { clearWaveformCache } from '../Waveform'
+
+const THEMES: { id: ThemeId; label: string; app: string; panel: string; accent: string }[] = [
+  { id: 'dark', label: 'Escuro', app: '#000000', panel: '#18181A', accent: '#FF5500' },
+  { id: 'slate', label: 'Slate', app: '#0A0C10', panel: '#1D222D', accent: '#FF5A1F' },
+  { id: 'warm', label: 'Quente', app: '#0B0A09', panel: '#241F1A', accent: '#FF5500' },
+  { id: 'violet', label: 'Violeta', app: '#0B0A11', panel: '#221E33', accent: '#8B5CF6' },
+  { id: 'ocean', label: 'Oceano', app: '#06090D', panel: '#19242E', accent: '#22B8CF' },
+]
+
+function ThemePicker({ value, onChange }: { value: ThemeId; onChange: (t: ThemeId) => void }) {
+  return (
+    <div className="py-3 border-b border-[var(--border)]">
+      <div className="text-sm text-white mb-3">Tema</div>
+      <div className="flex flex-wrap gap-4">
+        {THEMES.map((th) => {
+          const active = value === th.id
+          return (
+            <button key={th.id} onClick={() => onChange(th.id)} className="group flex flex-col items-center gap-2 press">
+              <span
+                className={`relative w-[72px] h-12 rounded-lg overflow-hidden border-2 transition-colors ${
+                  active ? 'border-[var(--accent)]' : 'border-white/10 group-hover:border-white/25'
+                }`}
+                style={{ background: th.app }}
+              >
+                <span className="absolute left-1.5 top-1.5 bottom-1.5 w-4 rounded" style={{ background: th.panel }} />
+                <span className="absolute right-1.5 bottom-1.5 h-1.5 w-8 rounded-full" style={{ background: th.accent }} />
+              </span>
+              <span className={`text-xs ${active ? 'text-white font-semibold' : 'text-[var(--text-dim)]'}`}>{th.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -91,6 +126,7 @@ export default function SettingsView() {
       <h1 className="display text-3xl mb-6">{t('set.title')}</h1>
 
       <Section title={t('set.appearance')}>
+        <ThemePicker value={s.theme} onChange={(th) => set('theme', th)} />
         <Row label={t('set.zoom')}>
           <div className="flex items-center gap-3">
             <button

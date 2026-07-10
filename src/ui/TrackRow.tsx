@@ -37,6 +37,7 @@ export default function TrackRow({
   const isPlaying = usePlayer((s) => s.isPlaying)
   const playQueue = usePlayer((s) => s.playQueue)
   const enqueue = usePlayer((s) => s.enqueue)
+  const playNext = usePlayer((s) => s.playNext)
   const openMenu = useContextMenu((s) => s.openMenu)
   const navigate = useNavigate()
   const isCurrent = current?.id === t.id
@@ -59,6 +60,7 @@ export default function TrackRow({
     }
     openMenu(clientX, clientY, [
       { label: 'Tocar', onClick: () => void playQueue(tracks, index) },
+      { label: 'Tocar a seguir', onClick: () => { playNext(t); pushToast('Tocará a seguir') } },
       { label: 'Adicionar à fila', onClick: () => { enqueue(t); pushToast('Adicionado à fila') } },
       { label: 'Adicionar à playlist', onClick: () => usePlaylistUi.getState().openAdd(t) },
       ...(playlistId !== undefined ? [remove] : []),

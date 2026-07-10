@@ -38,7 +38,7 @@ export default function CollectionHeader({
             className={`w-44 h-44 max-[900px]:w-32 max-[900px]:h-32 object-cover shadow-2xl shrink-0 ${rounded}`}
           />
         ) : (
-          <div className={`w-44 h-44 max-[900px]:w-32 max-[900px]:h-32 shrink-0 grid place-items-center shadow-2xl ${rounded}`} style={{ background: `linear-gradient(135deg, var(--accent), #7a1f00)` }}>
+          <div className={`w-44 h-44 max-[900px]:w-32 max-[900px]:h-32 shrink-0 grid place-items-center shadow-2xl ${rounded}`} style={{ background: `linear-gradient(135deg, var(--accent), var(--accent-deep))` }}>
             <Play size={48} className="text-white/90" fill="currentColor" />
           </div>
         )}

@@ -83,7 +83,7 @@ export default function SearchView() {
               <h2 className="text-lg font-bold mb-3">Artistas</h2>
               <div className="flex gap-5 flex-wrap">
                 {res.users.slice(0, 8).map((u) => (
-                  <Link key={u.id} to={`/artist/${u.id}`} className="w-28 text-center group">
+                  <Link key={u.id} to={`/artist/${u.id}`} className="w-28 text-center group hover-lift">
                     <img
                       src={u.avatarUrl}
                       className="w-24 h-24 rounded-full object-cover bg-white/5 mx-auto group-hover:ring-2 group-hover:ring-[var(--accent)] transition"
@@ -99,11 +99,13 @@ export default function SearchView() {
               <h2 className="text-lg font-bold mb-3">Playlists</h2>
               <div className="grid grid-cols-2 min-[720px]:grid-cols-4 min-[1100px]:grid-cols-6 gap-4">
                 {res.playlists.slice(0, 12).map((p) => (
-                  <Link key={p.id} to={`/playlist/${p.id}`} className="group">
-                    <img
-                      src={p.artworkUrl}
-                      className="aspect-square w-full object-cover rounded-lg bg-white/5 shadow-lg group-hover:brightness-110 transition"
-                    />
+                  <Link key={p.id} to={`/playlist/${p.id}`} className="group hover-lift">
+                    <div className="art-zoom rounded-lg">
+                      <img
+                        src={p.artworkUrl}
+                        className="aspect-square w-full object-cover rounded-lg bg-white/5 shadow-lg group-hover:brightness-110 transition"
+                      />
+                    </div>
                     <div className="text-sm font-semibold truncate mt-2">{p.title}</div>
                     <div className="text-xs text-[var(--text-dim)] truncate">{p.user} · {p.trackCount} faixas</div>
                   </Link>

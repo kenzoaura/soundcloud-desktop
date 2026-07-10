@@ -17,6 +17,9 @@ let seq = 1
 export const useToasts = create<ToastState>((set) => ({
   toasts: [],
   push: (message, kind = 'info') => {
+    // Skip a duplicate that's already on screen (e.g. spam-clicking a button
+    // that keeps failing) so identical toasts don't stack up.
+    if (useToasts.getState().toasts.some((t) => t.message === message && t.kind === kind)) return
     const id = seq++
     set((s) => ({ toasts: [...s.toasts, { id, message, kind }] }))
     setTimeout(() => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 4000)

@@ -9,30 +9,19 @@ import ErrorState from '../ErrorState'
 import EmptyState from '../EmptyState'
 import { Skeleton } from '../Skeleton'
 import { getCoverColor, rgbToCss, type RGB } from '../../lib/color'
+import { useToggleSync } from '../useToggleSync'
 import { pushToast } from '../toast/store'
 import type { Playlist, User } from '../../../electron/sc/types'
 
 type Tab = 'tracks' | 'playlists' | 'likes' | 'followers' | 'followings'
 
 function FollowButton({ userId, initial }: { userId: number; initial: boolean }) {
-  const [following, setFollowing] = useState(initial)
-  const [busy, setBusy] = useState(false)
-  useEffect(() => setFollowing(initial), [initial])
-  const toggle = async () => {
-    if (busy) return
-    const next = !following
-    setFollowing(next)
-    setBusy(true)
-    const ok = await window.sc.followUser(userId, next)
-    setBusy(false)
-    if (!ok) {
-      setFollowing(!next)
-      pushToast('Não consegui atualizar', 'error')
-    }
-  }
+  const { on: following, toggle } = useToggleSync(initial, (next) => window.sc.followUser(userId, next), {
+    onFail: () => pushToast('Não consegui atualizar', 'error'),
+  })
   return (
     <button
-      onClick={() => void toggle()}
+      onClick={toggle}
       className={`px-6 py-2.5 rounded-full text-sm font-bold transition-transform transition-colors active:scale-95 ${
         following
           ? 'bg-transparent border border-white/40 text-white hover:border-white'
@@ -231,8 +220,10 @@ export default function ArtistView() {
           ) : (
             <div className="grid grid-cols-2 min-[720px]:grid-cols-4 min-[1100px]:grid-cols-6 gap-4 p-2">
               {(playlists.data ?? []).map((p) => (
-                <Link key={p.id} to={`/playlist/${p.id}`} className="group">
-                  <img src={p.artworkUrl} className="aspect-square w-full object-cover rounded-lg bg-white/5 shadow-lg group-hover:brightness-110 transition" />
+                <Link key={p.id} to={`/playlist/${p.id}`} className="group hover-lift">
+                  <div className="art-zoom rounded-lg">
+                    <img src={p.artworkUrl} className="aspect-square w-full object-cover rounded-lg bg-white/5 shadow-lg group-hover:brightness-110 transition" />
+                  </div>
                   <div className="text-sm font-semibold truncate mt-2">{p.title}</div>
                   <div className="text-xs text-[var(--text-dim)] truncate">{p.trackCount} faixas</div>
                 </Link>
@@ -271,7 +262,7 @@ function UserGrid({
   return (
     <div className="grid grid-cols-2 min-[720px]:grid-cols-4 min-[1100px]:grid-cols-6 gap-4 p-2">
       {users.map((u) => (
-        <Link key={u.id} to={`/artist/${u.id}`} className="group flex flex-col items-center text-center">
+        <Link key={u.id} to={`/artist/${u.id}`} className="group flex flex-col items-center text-center hover-lift">
           <img
             src={u.avatarUrl}
             className="aspect-square w-full object-cover rounded-full bg-white/5 shadow-lg group-hover:ring-2 group-hover:ring-[var(--accent)] transition"

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, session, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, session, dialog, Menu, type MenuItemConstructorOptions } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import log from 'electron-log'
 import path from 'node:path'
@@ -64,7 +64,14 @@ function createPlayerWindow() {
   mainWindow = win
   const base = VITE_DEV_SERVER_URL ?? `file://${path.join(RENDERER_DIST, 'index.html')}`
   win.loadURL(base)
-  win.webContents.on('did-finish-load', () => win.webContents.setZoomFactor(getSettings().zoom))
+  const applyZoom = () => win.webContents.setZoomFactor(getSettings().zoom)
+  win.webContents.on('did-finish-load', () => {
+    applyZoom()
+    win.webContents.setVisualZoomLevelLimits(1, 1) // block trackpad pinch zoom
+  })
+  // The interface zoom is only meant to change via Settings. Undo any accidental
+  // Ctrl+wheel / shortcut zoom so it never silently drifts back to 100%.
+  win.webContents.on('zoom-changed', applyZoom)
   // Hide to tray on close (when enabled) instead of quitting.
   win.on('close', (e) => {
     if (!quitting && getSettings().closeToTray) {
@@ -261,7 +268,20 @@ export async function checkForUpdatesManual(): Promise<string> {
   }
 }
 
-app.whenReady().then(() => setupPlayer())
+// A minimal menu: keep clipboard/edit shortcuts, drop the default View menu
+// (which binds Ctrl+0 / Ctrl+± zoom that would fight the Settings zoom).
+function installMenu() {
+  const template: MenuItemConstructorOptions[] = [{ role: 'editMenu' }]
+  if (VITE_DEV_SERVER_URL) {
+    template.push({ label: 'Dev', submenu: [{ role: 'toggleDevTools' }, { role: 'forceReload' }] })
+  }
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+app.whenReady().then(() => {
+  installMenu()
+  setupPlayer()
+})
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createPlayerWindow()

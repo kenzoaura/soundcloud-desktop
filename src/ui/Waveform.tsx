@@ -79,6 +79,7 @@ export default function Waveform({
   const peaks = useWaveform(url)
   const ref = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<number | null>(null)
+  const [dragging, setDragging] = useState(false)
   const data = peaks ? downsample(peaks, bars) : Array.from({ length: bars }, () => 0.18)
 
   const fractionAt = (clientX: number): number => {
@@ -88,13 +89,35 @@ export default function Waveform({
     return Math.max(0, Math.min(1, (clientX - r.left) / r.width))
   }
 
+  // Drag to scrub: seek live while the pointer moves, tracked on the whole page
+  // so it keeps working even if the cursor leaves the waveform.
+  useEffect(() => {
+    if (!dragging) return
+    const onMove = (e: MouseEvent) => {
+      const f = fractionAt(e.clientX)
+      setHover(f)
+      onSeek(f)
+    }
+    const onUp = () => setDragging(false)
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [dragging, onSeek])
+
   return (
     <div
       ref={ref}
-      onClick={(e) => onSeek(fractionAt(e.clientX))}
-      onMouseMove={(e) => setHover(fractionAt(e.clientX))}
-      onMouseLeave={() => setHover(null)}
-      className={`group relative flex items-center gap-[2px] cursor-pointer ${className}`}
+      onMouseDown={(e) => {
+        e.preventDefault()
+        setDragging(true)
+        onSeek(fractionAt(e.clientX))
+      }}
+      onMouseMove={(e) => !dragging && setHover(fractionAt(e.clientX))}
+      onMouseLeave={() => !dragging && setHover(null)}
+      className={`group relative flex items-center gap-[2px] cursor-pointer select-none ${className}`}
     >
       {data.map((v, i) => {
         const at = (i + 0.5) / data.length

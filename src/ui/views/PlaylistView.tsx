@@ -8,35 +8,34 @@ import ErrorState from '../ErrorState'
 import CollectionHeader from '../CollectionHeader'
 import { usePlayer } from '../../player/store'
 import { usePlaylistUi, notifyPlaylistsChanged } from '../playlist/store'
+import { useToggleSync } from '../useToggleSync'
 import { pushToast } from '../toast/store'
 import type { Playlist } from '../../../electron/sc/types'
 
 function LikeButton({ playlist, initial }: { playlist: Playlist; initial: boolean }) {
-  const [liked, setLiked] = useState(initial)
-  const [busy, setBusy] = useState(false)
   const [pop, setPop] = useState(0)
-  useEffect(() => setLiked(initial), [initial])
-  const toggle = async () => {
-    if (busy) return
-    const next = !liked
-    setLiked(next)
-    if (next) setPop((p) => p + 1)
-    setBusy(true)
-    // Update the sidebar immediately (the API write + refetch lag a bit).
-    window.dispatchEvent(new CustomEvent('sc:playlists-changed', { detail: { playlist, liked: next } }))
-    const ok = await window.sc.likePlaylist(playlist.id, next)
-    setBusy(false)
-    if (ok) {
-      pushToast(next ? 'Playlist curtida' : 'Removida das curtidas')
-    } else {
-      setLiked(!next)
-      window.dispatchEvent(new CustomEvent('sc:playlists-changed', { detail: { playlist, liked: !next } }))
-      pushToast('Não consegui atualizar', 'error')
-    }
-  }
+  const { on: liked, toggle } = useToggleSync(
+    initial,
+    async (next) => {
+      const ok = await window.sc.likePlaylist(playlist.id, next)
+      if (!ok) {
+        // Roll the sidebar back to the confirmed state on failure.
+        window.dispatchEvent(new CustomEvent('sc:playlists-changed', { detail: { playlist, liked: !next } }))
+      }
+      return ok
+    },
+    {
+      onChange: (next) => {
+        if (next) setPop((p) => p + 1)
+        // Reflect in the sidebar immediately (optimistic).
+        window.dispatchEvent(new CustomEvent('sc:playlists-changed', { detail: { playlist, liked: next } }))
+      },
+      onFail: () => pushToast('Não consegui atualizar', 'error'),
+    },
+  )
   return (
     <button
-      onClick={() => void toggle()}
+      onClick={toggle}
       className={`inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold border transition-colors active:scale-95 ${
         liked
           ? 'bg-[var(--accent)] border-[var(--accent)] text-white'

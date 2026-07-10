@@ -82,3 +82,15 @@ export const useEq = create<EqState>((set, get) => ({
     persist({ enabled: s.enabled, gains, preset: p })
   },
 }))
+
+// The audio graph is (re)built lazily on play, so re-assert the saved EQ whenever
+// a new track starts — this is what makes the equalizer survive an app restart.
+let lastTrackId: number | null = null
+usePlayer.subscribe((state) => {
+  const id = state.current?.id ?? null
+  if (id !== lastTrackId) {
+    lastTrackId = id
+    const s = useEq.getState()
+    apply(s.enabled, s.gains)
+  }
+})

@@ -73,6 +73,7 @@ interface PlayerBridge {
 
 interface AppSettings {
   zoom: number
+  theme: 'dark' | 'slate' | 'warm' | 'violet' | 'ocean'
   language: 'pt' | 'en'
   discordEnabled: boolean
   closeToTray: boolean

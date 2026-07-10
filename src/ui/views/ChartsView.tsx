@@ -39,7 +39,7 @@ export default function ChartsView() {
 
   return (
     <section className="p-6">
-      <div className="rounded-xl p-6 mb-6" style={{ background: 'linear-gradient(135deg, var(--accent), #7a1f00)' }}>
+      <div className="rounded-xl p-6 mb-6" style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-deep))' }}>
         <div className="eyebrow text-white/80">SoundCloud</div>
         <h1 className="display text-4xl text-white mt-1">Explorar</h1>
         <p className="text-white/80 text-sm mt-2">Faixas populares por gênero.</p>

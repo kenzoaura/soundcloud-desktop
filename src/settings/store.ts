@@ -1,8 +1,11 @@
 import { create } from 'zustand'
 import { usePlayer } from '../player/store'
 
+export type ThemeId = 'dark' | 'slate' | 'warm' | 'violet' | 'ocean'
+
 export type AppSettings = {
   zoom: number
+  theme: ThemeId
   language: 'pt' | 'en'
   discordEnabled: boolean
   closeToTray: boolean
@@ -25,6 +28,9 @@ interface SettingsState {
 
 function applyRenderer(s: AppSettings): void {
   document.documentElement.classList.toggle('force-reduce-motion', s.reduceMotion)
+  // 'dark' is the default (no attribute); other themes set data-theme on <html>.
+  if (s.theme && s.theme !== 'dark') document.documentElement.dataset.theme = s.theme
+  else delete document.documentElement.dataset.theme
   // setVolume applies to both the store and the audio engine.
   usePlayer.getState().setVolume(s.volume)
 }

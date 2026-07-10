@@ -27,6 +27,8 @@ interface PlayerState {
   nowPlayingOpen: boolean
   setNowPlaying: (open: boolean) => void
   enqueue: (track: Track) => void
+  playNext: (track: Track) => void
+  reorderQueue: (from: number, to: number) => void
   restore: (s: SavedSession) => void
   jumpTo: (index: number) => Promise<void>
   removeFromQueue: (index: number) => void
@@ -141,6 +143,33 @@ export const usePlayer = create<PlayerState>((set, get) => {
         return
       }
       set({ queue: { ...queue, tracks: [...queue.tracks, track] } })
+    },
+    playNext: (track) => {
+      const { queue, current } = get()
+      if (!current) {
+        void get().playQueue([track], 0)
+        return
+      }
+      // Insert right after the currently-playing track.
+      const at = queue.index + 1
+      const tracks = [...queue.tracks.slice(0, at), track, ...queue.tracks.slice(at)]
+      set({ queue: { ...queue, tracks } })
+    },
+    reorderQueue: (from, to) => {
+      const { queue } = get()
+      const n = queue.tracks.length
+      if (from < 0 || from >= n || to < 0 || to >= n || from === to) return
+      const tracks = [...queue.tracks]
+      const [moved] = tracks.splice(from, 1)
+      tracks.splice(to, 0, moved)
+      // Keep the currently-playing item selected after the move.
+      let index = queue.index
+      if (from === index) index = to
+      else {
+        if (from < index) index -= 1
+        if (to <= index) index += 1
+      }
+      set({ queue: { tracks, index } })
     },
 
     playQueue: async (tracks, startIndex) => {

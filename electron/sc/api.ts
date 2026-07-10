@@ -191,10 +191,17 @@ export class ScApi {
   // genre urn like "soundcloud:genres:all-music". The collection embeds only
   // stubs, so hydrate the ids for full track data.
   // The v2 /charts endpoint is gated for our client_id (400/404), so "explore by
-  // genre" is backed by a search for the genre term, which is reliable.
+  // genre" is backed by a search. Use /search/tracks (tracks-only) instead of the
+  // mixed /search, otherwise most of the `limit` results are users/playlists and
+  // only a handful of tracks come back.
   async genreTracks(term: string, limit = 50): Promise<Track[]> {
-    const { tracks } = await this.search(term, limit)
-    return tracks
+    const data = (await this.get('/search/tracks', { q: term, limit })) as { collection?: unknown[] }
+    const out: Track[] = []
+    for (const raw of Array.isArray(data.collection) ? data.collection : []) {
+      const t = normalizeTrack(raw)
+      if (t) out.push(t)
+    }
+    return out
   }
 
   async track(id: number): Promise<Track | null> {

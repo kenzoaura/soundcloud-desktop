@@ -1,12 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { Heart, Play } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Play, Pause } from 'lucide-react'
 import { useAsync } from '../useAsync'
 import { usePlayer } from '../../player/store'
 import { pushToast } from '../toast/store'
 import { translateSelectionTitle } from '../i18n'
 import { useT, type StringKey } from '../strings'
 import { Skeleton } from '../Skeleton'
-import type { Track, User, HomeSelection, HomeItem } from '../../../electron/sc/types'
+import type { Track, HomeSelection, HomeItem } from '../../../electron/sc/types'
 
 function greetKey(): StringKey {
   const h = new Date().getHours()
@@ -16,26 +16,20 @@ function greetKey(): StringKey {
   return 'greet.evening'
 }
 
-function compact(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.0', '')}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace('.0', '')}K`
-  return String(n)
-}
-
 function TrackCard({ tracks, index }: { tracks: Track[]; index: number }) {
   const t = tracks[index]
   const playQueue = usePlayer((s) => s.playQueue)
   const navigate = useNavigate()
   return (
-    <div className="group text-left w-40 shrink-0">
-      <div className="relative cursor-pointer" onClick={() => navigate(`/track/${t.id}`)}>
+    <div className="group text-left w-40 shrink-0 hover-lift">
+      <div className="relative cursor-pointer art-zoom rounded-lg" onClick={() => navigate(`/track/${t.id}`)}>
         <img src={t.artworkUrl} className="aspect-square w-full object-cover rounded-lg bg-white/5 shadow-lg group-hover:brightness-110 transition" />
         <button
           onClick={(e) => {
             e.stopPropagation()
             void playQueue(tracks, index)
           }}
-          className="absolute bottom-2 right-2 w-11 h-11 rounded-full bg-[var(--accent)] grid place-items-center text-white opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all shadow-xl hover:scale-105"
+          className="absolute bottom-2 right-2 w-11 h-11 rounded-full bg-[var(--accent)] grid place-items-center text-white opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all shadow-xl hover:scale-110 press"
           aria-label="Tocar"
         >
           <Play size={18} fill="currentColor" />
@@ -62,12 +56,12 @@ function SelectionCard({ item }: { item: HomeItem }) {
     else pushToast('Não consegui carregar essa seleção', 'error')
   }
   return (
-    <div className="group text-left w-40 shrink-0">
-      <div className="relative cursor-pointer" onClick={open}>
+    <div className="group text-left w-40 shrink-0 hover-lift">
+      <div className="relative cursor-pointer art-zoom rounded-lg" onClick={open}>
         <img src={item.artworkUrl} className="aspect-square w-full object-cover rounded-lg bg-white/5 shadow-lg group-hover:brightness-110 transition" />
         <button
           onClick={play}
-          className="absolute bottom-2 right-2 w-11 h-11 rounded-full bg-[var(--accent)] grid place-items-center text-white opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all shadow-xl hover:scale-105"
+          className="absolute bottom-2 right-2 w-11 h-11 rounded-full bg-[var(--accent)] grid place-items-center text-white opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all shadow-xl hover:scale-110 press"
           aria-label="Tocar"
         >
           <Play size={18} fill="currentColor" />
@@ -105,41 +99,39 @@ function RowSkeleton() {
   )
 }
 
-// Featured "recently played" block: big cover of the last track + a mini list.
-function RecentBlock({ tracks }: { tracks: Track[] }) {
-  const t = useT()
+// A recently-played tile: compact pill with artwork + title, reflecting play
+// state, in place of the old sidebar-duplicating quick-access shortcuts.
+function RecentTile({ tracks, index }: { tracks: Track[]; index: number }) {
+  const t = tracks[index]
   const playQueue = usePlayer((s) => s.playQueue)
+  const toggle = usePlayer((s) => s.toggle)
   const current = usePlayer((s) => s.current)
+  const isPlaying = usePlayer((s) => s.isPlaying)
   const navigate = useNavigate()
-  const head = tracks[0]
+  const isCur = current?.id === t.id
+  const play = () => (isCur ? toggle() : void playQueue(tracks, index))
   return (
-    <div className="mb-8 rounded-xl bg-white/[0.04] border border-[var(--border)] p-4 flex gap-5 max-[560px]:flex-col">
-      <div className="relative w-44 h-44 shrink-0">
-        <img src={head.artworkUrl} className="w-full h-full object-cover rounded-lg bg-white/5 shadow-lg" />
-        <button
-          onClick={() => void playQueue(tracks, 0)}
-          className="absolute bottom-2 right-2 w-12 h-12 rounded-full bg-[var(--accent)] grid place-items-center text-white shadow-xl hover:scale-105 transition"
-          aria-label="Tocar"
-        >
-          <Play size={20} fill="currentColor" />
-        </button>
+    <div
+      onClick={() => navigate(`/track/${t.id}`)}
+      className="group relative flex items-center gap-4 h-16 rounded-md bg-white/[0.06] hover:bg-white/[0.12] overflow-hidden transition-colors cursor-pointer art-zoom"
+    >
+      <img src={t.artworkUrl} className="h-16 w-16 object-cover bg-white/5 shrink-0" />
+      <div className="min-w-0 flex-1 pr-1">
+        <div className={`font-bold truncate ${isCur ? 'text-[var(--accent)]' : ''}`}>{t.title}</div>
+        <div className="text-xs text-[var(--text-dim)] truncate">{t.artist}</div>
       </div>
-      <div className="min-w-0 flex-1">
-        <h2 className="text-xl font-bold tracking-tight mb-3">{t('home.recent')}</h2>
-        <div className="flex flex-col">
-          {tracks.slice(0, 5).map((tk, i) => (
-            <div key={`${tk.id}-${i}`} className="group flex items-center gap-3 py-1.5 rounded hover:bg-white/5 px-2 -mx-2">
-              <button onClick={() => void playQueue(tracks, i)} className="shrink-0 text-[var(--text-muted)] group-hover:text-[var(--accent)]" aria-label="Tocar">
-                <Play size={14} fill="currentColor" />
-              </button>
-              <button onClick={() => navigate(`/track/${tk.id}`)} className="min-w-0 text-left flex-1">
-                <div className={`text-sm truncate ${current?.id === tk.id ? 'text-[var(--accent)]' : ''}`}>{tk.title}</div>
-                <div className="text-xs text-[var(--text-dim)] truncate">{tk.artist}</div>
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          play()
+        }}
+        className={`mr-3 w-10 h-10 rounded-full bg-[var(--accent)] grid place-items-center text-white shadow-lg shrink-0 transition hover:scale-110 press ${
+          isCur ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
+        aria-label={isCur && isPlaying ? 'Pausar' : 'Tocar'}
+      >
+        {isCur && isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+      </button>
     </div>
   )
 }
@@ -167,52 +159,16 @@ function MiniTrack({ track }: { track: Track }) {
   )
 }
 
-function SuggestedArtist({ user }: { user: User }) {
-  return (
-    <Link to={`/artist/${user.id}`} className="group flex items-center gap-3 py-1.5">
-      <img src={user.avatarUrl} className="w-11 h-11 rounded-full object-cover bg-white/10 shrink-0 group-hover:ring-2 group-hover:ring-[var(--accent)] transition" />
-      <div className="min-w-0">
-        <div className="text-sm truncate group-hover:underline">{user.username}</div>
-        {typeof user.followersCount === 'number' && (
-          <div className="text-xs text-[var(--text-dim)] truncate">{compact(user.followersCount)} seguidores</div>
-        )}
-      </div>
-    </Link>
-  )
-}
-
 export default function HomeView() {
   const t = useT()
   const me = useAsync(() => window.sc.me(), [])
-  const playlists = useAsync(() => window.sc.playlists(), [])
   const history = useAsync(() => window.sc.playHistory(), [])
   const home = useAsync(() => window.sc.home(), [])
   const newTracks = useAsync(() => window.sc.feed(), [])
-  const suggested = useAsync(async () => {
-    const [likes, hist, following] = await Promise.all([
-      window.sc.likes(40).catch(() => [] as Track[]),
-      window.sc.playHistory().catch(() => [] as Track[]),
-      window.sc.followingIds().catch(() => [] as number[]),
-    ])
-    const follow = new Set(following)
-    const seen = new Set<number>()
-    const ids: number[] = []
-    for (const tk of [...hist, ...likes]) {
-      if (tk.artistId && !seen.has(tk.artistId) && !follow.has(tk.artistId)) {
-        seen.add(tk.artistId)
-        ids.push(tk.artistId)
-      }
-      if (ids.length >= 6) break
-    }
-    const users = await Promise.all(ids.map((id) => window.sc.user(id).catch(() => null)))
-    return users.filter((u): u is User => u !== null)
-  }, [])
 
-  const pls = playlists.data ?? []
   const hist: Track[] = history.data ?? []
   const selections: HomeSelection[] = home.data ?? []
   const feed: Track[] = newTracks.data ?? []
-  const artists: User[] = suggested.data ?? []
 
   return (
     <section className="p-6">
@@ -221,29 +177,32 @@ export default function HomeView() {
         {me.data?.username ? `, ${me.data.username}` : ''}
       </h1>
 
-      <div className="grid grid-cols-[1fr_300px] max-[1100px]:grid-cols-1 gap-8 items-start">
-        {/* Main column */}
-        <div className="min-w-0">
-          {/* Quick access */}
-          <div className="grid grid-cols-1 min-[560px]:grid-cols-2 gap-3 mb-8 stagger-in">
-            <Link to="/likes" className="group flex items-center gap-4 h-16 rounded-md bg-white/[0.06] hover:bg-white/[0.12] overflow-hidden transition-colors">
-              <div className="h-16 w-16 grid place-items-center shrink-0" style={{ background: 'linear-gradient(135deg, var(--accent), #7a1f00)' }}>
-                <Heart size={22} className="text-white" fill="currentColor" />
-              </div>
-              <span className="font-bold truncate">{t('nav.likes')}</span>
-            </Link>
-            {playlists.loading
-              ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-md" />)
-              : pls.slice(0, 5).map((p) => (
-                  <Link key={p.id} to={`/playlist/${p.id}`} className="group flex items-center gap-4 h-16 rounded-md bg-white/[0.06] hover:bg-white/[0.12] overflow-hidden transition-colors">
-                    <img src={p.artworkUrl} className="h-16 w-16 object-cover bg-white/5 shrink-0" />
-                    <span className="font-bold truncate pr-3">{p.title}</span>
-                  </Link>
+      {/* The right rail floats top-right: rows that start below it reclaim the
+          full width instead of the whole page staying in two columns. */}
+      <div className="after:block after:clear-both">
+        <aside className="float-right w-[200px] ml-5 mb-4 max-[1100px]:hidden">
+          {feed.length > 0 && (
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">{t('home.newTracks')}</h2>
+              <div className="flex flex-col">
+                {feed.slice(0, 9).map((tk, i) => (
+                  <MiniTrack key={`${tk.id}-${i}`} track={tk} />
                 ))}
-          </div>
+              </div>
+            </div>
+          )}
+        </aside>
 
-          {/* Featured recently played */}
-          {hist.length > 0 && <RecentBlock tracks={hist} />}
+        {/* Main content flows around the float */}
+        <div className="min-w-0">
+          {/* Recently played tiles */}
+          {hist.length > 0 && (
+            <div className="grid grid-cols-1 min-[560px]:grid-cols-2 gap-3 mb-8 stagger-in">
+              {hist.slice(0, 6).map((tk, i) => (
+                <RecentTile key={`${tk.id}-${i}`} tracks={hist} index={i} />
+              ))}
+            </div>
+          )}
 
           {/* SoundCloud's personalized selections */}
           {home.loading && (
@@ -268,30 +227,6 @@ export default function HomeView() {
             </Row>
           )}
         </div>
-
-        {/* Right column */}
-        <aside className="max-[1100px]:hidden flex flex-col gap-8">
-          {feed.length > 0 && (
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">{t('home.newTracks')}</h2>
-              <div className="flex flex-col">
-                {feed.slice(0, 5).map((tk, i) => (
-                  <MiniTrack key={`${tk.id}-${i}`} track={tk} />
-                ))}
-              </div>
-            </div>
-          )}
-          {artists.length > 0 && (
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">{t('home.suggestedArtists')}</h2>
-              <div className="flex flex-col">
-                {artists.map((u) => (
-                  <SuggestedArtist key={u.id} user={u} />
-                ))}
-              </div>
-            </div>
-          )}
-        </aside>
       </div>
     </section>
   )

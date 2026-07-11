@@ -6,8 +6,8 @@ import { usePlayer } from '../player/store'
 import { useLikes } from '../lib/likes'
 import Equalizer from './Equalizer'
 import { useContextMenu } from './contextMenu/store'
-import { usePlaylistUi, notifyPlaylistsChanged } from './playlist/store'
-import { pushToast } from './toast/store'
+import { buildTrackMenu } from './contextMenu/trackMenu'
+import { usePlaylistUi } from './playlist/store'
 import { useTrackLike } from '../lib/useTrackLike'
 
 function fmt(ms: number): string {
@@ -48,34 +48,20 @@ export default function TrackRow({
   const { liked: likeOn, toggle: toggleLike } = useTrackLike(t)
 
   const openMenuAt = (clientX: number, clientY: number) => {
-    const remove = {
-      label: 'Remover da playlist',
-      onClick: async () => {
-        if (playlistId === undefined) return
-        const ok = await window.sc.removeFromPlaylist(playlistId, t.id)
-        if (ok) {
-          pushToast('Removida da playlist')
-          notifyPlaylistsChanged()
-          window.dispatchEvent(new CustomEvent('sc:playlist-tracks-changed', { detail: { id: playlistId } }))
-        } else pushToast('Não consegui remover', 'error')
-      },
-    }
-    openMenu(clientX, clientY, [
-      { label: 'Tocar', onClick: () => void playQueue(tracks, index) },
-      { label: 'Tocar a seguir', onClick: () => { playNext(t); pushToast('Tocará a seguir') } },
-      { label: 'Adicionar à fila', onClick: () => { enqueue(t); pushToast('Adicionado à fila') } },
-      { label: 'Adicionar à playlist', onClick: () => usePlaylistUi.getState().openAdd(t) },
-      ...(playlistId !== undefined ? [remove] : []),
-      { label: 'Abrir faixa', onClick: () => navigate(`/track/${t.id}`) },
-      { label: 'Ir para o artista', onClick: () => navigate(`/artist/${t.artistId}`) },
-      { label: 'Abrir no SoundCloud', onClick: () => t.permalink && window.sc.openExternal(t.permalink) },
-      {
-        label: 'Copiar link',
-        onClick: () => {
-          if (t.permalink) void navigator.clipboard.writeText(t.permalink).then(() => pushToast('Link copiado'))
-        },
-      },
-    ])
+    openMenu(
+      clientX,
+      clientY,
+      buildTrackMenu({
+        track: t,
+        tracks,
+        index,
+        playlistId,
+        navigate,
+        playQueue,
+        playNext,
+        enqueue,
+      }),
+    )
   }
 
   return (

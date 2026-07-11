@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
-import { SkipBack, SkipForward, Play, Pause, Shuffle, Repeat, Repeat1, Heart } from 'lucide-react'
+import { SkipBack, SkipForward, Play, Pause, Shuffle, Repeat, Repeat1, Heart, ArrowUpRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { usePlayer } from '../player/store'
 import { getCoverColor, rgbToCss } from '../lib/color'
 import { useTrackLike } from '../lib/useTrackLike'
+import { useContextMenu } from './contextMenu/store'
+import { buildTrackMenu } from './contextMenu/trackMenu'
 import Waveform from './Waveform'
 import VolumeControl from './VolumeControl'
 import QueuePopover from './QueuePopover'
@@ -18,6 +21,8 @@ export default function PlayerBar() {
   const [dragging, setDragging] = useState(false)
   const [tint, setTint] = useState<string>('transparent')
   const { liked, toggle: toggleLike } = useTrackLike(s.current)
+  const navigate = useNavigate()
+  const openMenu = useContextMenu((st) => st.openMenu)
 
   useEffect(() => {
     const url = s.current?.artworkUrl
@@ -43,6 +48,23 @@ export default function PlayerBar() {
       <div className="flex items-center gap-2 min-w-0">
         <button
           onClick={() => setNowPlaying(true)}
+          onContextMenu={(e) => {
+            e.preventDefault()
+            if (!s.current) return
+            openMenu(
+              e.clientX,
+              e.clientY,
+              buildTrackMenu({
+                track: s.current,
+                tracks: [s.current],
+                index: 0,
+                navigate,
+                playQueue: s.playQueue,
+                playNext: s.playNext,
+                enqueue: s.enqueue,
+              }),
+            )
+          }}
           className="flex items-center gap-3 min-w-0 text-left group"
           aria-label="Abrir tocando agora"
         >
@@ -66,6 +88,14 @@ export default function PlayerBar() {
           title={liked ? 'Descurtir' : 'Curtir'}
         >
           <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+        </button>
+        <button
+          onClick={() => s.current && navigate(`/track/${s.current.id}`)}
+          className="shrink-0 grid place-items-center w-8 h-8 rounded-full text-[var(--text-dim)] hover:text-white hover:bg-white/5 transition-colors"
+          aria-label="Ir para a faixa"
+          title="Ir para a faixa"
+        >
+          <ArrowUpRight size={18} />
         </button>
       </div>
 

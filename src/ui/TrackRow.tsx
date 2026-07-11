@@ -8,6 +8,7 @@ import Equalizer from './Equalizer'
 import { useContextMenu } from './contextMenu/store'
 import { usePlaylistUi, notifyPlaylistsChanged } from './playlist/store'
 import { pushToast } from './toast/store'
+import { useTrackLike } from '../lib/useTrackLike'
 
 function fmt(ms: number): string {
   const s = Math.floor(ms / 1000)
@@ -44,6 +45,7 @@ export default function TrackRow({
   const ensureLikes = useLikes((s) => s.ensure)
   const isLiked = useLikes((s) => s.ids.has(t.id)) || liked
   useEffect(() => ensureLikes(), [ensureLikes])
+  const { liked: likeOn, toggle: toggleLike } = useTrackLike(t)
 
   const openMenuAt = (clientX: number, clientY: number) => {
     const remove = {
@@ -138,6 +140,22 @@ export default function TrackRow({
           <Clock size={13} className="text-[var(--text-muted)]" />
           {fmt(t.durationMs)}
         </span>
+        {/* Like toggle: always visible when liked, otherwise reveals on hover. */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            toggleLike()
+          }}
+          className={`grid place-items-center w-7 h-7 rounded-full transition-colors ${
+            likeOn
+              ? 'text-[var(--accent)] opacity-100'
+              : 'text-[var(--text-dim)] hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100'
+          }`}
+          title={likeOn ? 'Descurtir' : 'Curtir'}
+          aria-label={likeOn ? 'Descurtir' : 'Curtir'}
+        >
+          <Heart size={16} fill={likeOn ? 'currentColor' : 'none'} />
+        </button>
         {/* Hover actions: add-to-playlist and the context menu. */}
         <span className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button

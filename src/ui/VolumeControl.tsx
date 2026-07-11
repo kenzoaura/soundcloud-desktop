@@ -1,22 +1,13 @@
-import { useState } from 'react'
 import { Volume2, Volume1, VolumeX } from 'lucide-react'
 import { usePlayer } from '../player/store'
 import { useSettings } from '../settings/store'
+import { toggleMute } from '../player/mute'
 
 export default function VolumeControl() {
   const volume = usePlayer((s) => s.volume)
   const setVolume = useSettings((s) => s.setVolume) // applies live + persists
-  const [last, setLast] = useState(volume || 1)
 
   const Icon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2
-  const toggleMute = () => {
-    if (volume > 0) {
-      setLast(volume)
-      setVolume(0)
-    } else {
-      setVolume(last || 1)
-    }
-  }
   // Mouse wheel over the control nudges the volume (Spotify/YouTube style).
   const onWheel = (e: React.WheelEvent) => {
     const step = 0.05

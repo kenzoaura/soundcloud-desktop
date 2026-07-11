@@ -1,34 +1,39 @@
 import { useEffect } from 'react'
 import { usePlayer } from '../player/store'
+import { shortcutAction } from './shortcuts'
+import { toggleMute } from '../player/mute'
+import { toggleCurrentLike } from '../lib/likeActions'
 
 export function useKeyboardShortcuts(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return
+      const action = shortcutAction(e.code, e.ctrlKey)
+      if (!action) return
+      e.preventDefault()
       const s = usePlayer.getState()
-      switch (e.code) {
-        case 'Space':
-          e.preventDefault()
+      switch (action.type) {
+        case 'toggle':
           s.toggle()
           break
-        case 'ArrowRight':
-          e.preventDefault()
-          if (e.ctrlKey) void s.next()
-          else s.seek(Math.min(s.duration || 0, s.position + 5))
+        case 'next':
+          void s.next()
           break
-        case 'ArrowLeft':
-          e.preventDefault()
-          if (e.ctrlKey) void s.previous()
-          else s.seek(Math.max(0, s.position - 5))
+        case 'previous':
+          void s.previous()
           break
-        case 'ArrowUp':
-          e.preventDefault()
-          s.setVolume(Math.min(1, s.volume + 0.05))
+        case 'seek':
+          s.seek(Math.max(0, Math.min(s.duration || 0, s.position + action.delta)))
           break
-        case 'ArrowDown':
-          e.preventDefault()
-          s.setVolume(Math.max(0, s.volume - 0.05))
+        case 'volume':
+          s.setVolume(Math.max(0, Math.min(1, s.volume + action.delta)))
+          break
+        case 'like':
+          void toggleCurrentLike()
+          break
+        case 'mute':
+          toggleMute()
           break
       }
     }

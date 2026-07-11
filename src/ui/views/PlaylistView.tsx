@@ -93,7 +93,9 @@ export default function PlaylistView() {
         artworkUrl={data?.playlist.artworkUrl}
         eyebrow="Playlist"
         title={data?.playlist.title ?? 'Playlist'}
-        meta={data ? `${data.playlist.user} · ${tracks.length} faixas` : undefined}
+        creatorId={data?.playlist.userId}
+        creatorName={data?.playlist.user}
+        meta={data ? `${tracks.length} faixas` : undefined}
         onPlay={tracks.length > 0 ? () => void playQueue(tracks, 0) : undefined}
       />
       {data && (

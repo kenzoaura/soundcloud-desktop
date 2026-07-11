@@ -73,6 +73,18 @@ describe('normalizePlaylist', () => {
   })
 })
 
+describe('normalizePlaylist userId', () => {
+  it('populates userId from the nested user', () => {
+    const p = normalizePlaylist({ id: 5, title: 'Mix', user: { id: 99, username: 'kenzo' } })
+    expect(p?.userId).toBe(99)
+    expect(p?.user).toBe('kenzo')
+  })
+  it('leaves userId undefined when the user id is missing', () => {
+    const p = normalizePlaylist({ id: 5, title: 'Mix', user: { username: 'kenzo' } })
+    expect(p?.userId).toBeUndefined()
+  })
+})
+
 describe('normalizeTrack against real fixture', () => {
   it('maps each collection item to a valid Track', () => {
     const items = (fixture as { collection: unknown[] }).collection

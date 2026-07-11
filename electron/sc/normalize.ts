@@ -96,6 +96,7 @@ export function normalizePlaylist(raw: unknown): Playlist | null {
     artworkUrl: bestArtwork(str(r.artwork_url), str(user.avatar_url)),
     trackCount: num(r.track_count) ?? 0,
     user: str(user.username) ?? 'Unknown',
+    userId: num(user.id),
     permalink: str(r.permalink_url) ?? '',
   }
 }

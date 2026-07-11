@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Play } from 'lucide-react'
 import { getCoverColor, rgbToCss, type RGB } from '../lib/color'
 
@@ -9,6 +10,8 @@ export default function CollectionHeader({
   meta,
   rounded = 'rounded-lg',
   onPlay,
+  creatorId,
+  creatorName,
 }: {
   artworkUrl?: string
   eyebrow: string
@@ -16,6 +19,8 @@ export default function CollectionHeader({
   meta?: string
   rounded?: string
   onPlay?: () => void
+  creatorId?: number
+  creatorName?: string
 }) {
   const [color, setColor] = useState<RGB | null>(null)
   useEffect(() => {
@@ -45,7 +50,16 @@ export default function CollectionHeader({
         <div className="min-w-0 pb-1">
           <div className="eyebrow">{eyebrow}</div>
           <h1 className="display text-[clamp(2rem,5vw,4.25rem)] text-white truncate mt-1">{title}</h1>
-          {meta && <div className="text-sm text-[var(--text-dim)] mt-3">{meta}</div>}
+          {creatorId !== undefined && creatorName ? (
+            <div className="text-sm text-[var(--text-dim)] mt-3">
+              <Link to={`/artist/${creatorId}`} className="font-semibold text-white hover:underline">
+                {creatorName}
+              </Link>
+              {meta && <span> · {meta}</span>}
+            </div>
+          ) : (
+            meta && <div className="text-sm text-[var(--text-dim)] mt-3">{meta}</div>
+          )}
           {onPlay && (
             <button
               onClick={onPlay}

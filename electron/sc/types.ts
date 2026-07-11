@@ -48,7 +48,7 @@ export interface User {
   country?: string
 }
 export interface Playlist {
-  id: number; title: string; artworkUrl?: string; trackCount: number; user: string; permalink: string
+  id: number; title: string; artworkUrl?: string; trackCount: number; user: string; userId?: number; permalink: string
 }
 export interface HomeItem {
   title: string

@@ -9,9 +9,11 @@ import {
   Repeat,
   Repeat1,
   ListMusic,
+  Heart,
 } from 'lucide-react'
 import { usePlayer } from '../player/store'
 import { getCoverColor, rgbToCss, type RGB } from '../lib/color'
+import { useTrackLike } from '../lib/useTrackLike'
 import Waveform from './Waveform'
 
 function fmt(sec: number): string {
@@ -25,6 +27,7 @@ export default function NowPlaying() {
   const setNowPlaying = usePlayer((st) => st.setNowPlaying)
   const [color, setColor] = useState<RGB | null>(null)
   const [queueOpen, setQueueOpen] = useState(false)
+  const { liked, toggle: toggleLike } = useTrackLike(s.current)
 
   useEffect(() => {
     if (!s.current?.artworkUrl) {
@@ -91,6 +94,18 @@ export default function NowPlaying() {
               <div className="display text-4xl truncate">{s.current.title}</div>
               <div className="text-[var(--text-dim)] text-lg truncate mt-2">{s.current.artist}</div>
             </div>
+            <button
+              onClick={toggleLike}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors active:scale-95 ${
+                liked
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-transparent border-white/25 text-white hover:border-white'
+              }`}
+              aria-label={liked ? 'Descurtir' : 'Curtir'}
+            >
+              <Heart size={16} fill={liked ? 'currentColor' : 'none'} />
+              {liked ? 'Curtida' : 'Curtir'}
+            </button>
             <div className="w-full max-w-3xl flex items-center gap-3">
               <span className="text-xs text-[var(--text-muted)] w-10 text-right tabular-nums">{fmt(s.position)}</span>
               {s.current.waveformUrl ? (

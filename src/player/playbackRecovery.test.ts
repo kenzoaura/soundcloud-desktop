@@ -18,6 +18,10 @@ describe('decideHlsError', () => {
   it('gives up on any other fatal error', () => {
     expect(decideHlsError(true, 'otherError', false)).toBe('give-up')
   })
+  it('restarts loading on a fatal network error until retries are exhausted', () => {
+    expect(decideHlsError(true, 'networkError', false, false)).toBe('restart-load')
+    expect(decideHlsError(true, 'networkError', false, true)).toBe('give-up')
+  })
 })
 
 describe('shouldStopAfterFailure', () => {

@@ -135,10 +135,19 @@ export class AudioEngine {
       // hls.js swallows stream faults into its own ERROR event instead of the
       // media element's; without this a fatal fault stalls playback forever.
       let mediaRecoveryUsed = false
+      let networkRetries = 0
+      const MAX_HLS_NETWORK_RETRIES = 3
       hls.on(Hls.Events.ERROR, (_evt, data) => {
-        const action = decideHlsError(data.fatal, data.type, mediaRecoveryUsed)
-        if (action === 'restart-load') hls.startLoad()
-        else if (action === 'recover-media') {
+        const action = decideHlsError(
+          data.fatal,
+          data.type,
+          mediaRecoveryUsed,
+          networkRetries >= MAX_HLS_NETWORK_RETRIES,
+        )
+        if (action === 'restart-load') {
+          networkRetries += 1
+          hls.startLoad()
+        } else if (action === 'recover-media') {
           mediaRecoveryUsed = true
           hls.recoverMediaError()
         } else if (action === 'give-up') this.fail()
@@ -157,6 +166,7 @@ export class AudioEngine {
     return this.audio.play()
   }
   pause(): void {
+    this.clearStall()
     this.audio.pause()
   }
   seek(sec: number): void {

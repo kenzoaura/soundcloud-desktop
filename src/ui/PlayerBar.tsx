@@ -26,6 +26,8 @@ export default function PlayerBar() {
       return
     }
     getCoverColor(url).then((c) => setTint(c ? rgbToCss(c, 0.12) : 'transparent'))
+    // Only re-tint when the artwork changes, not on every store update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.current?.artworkUrl])
 
   if (!s.current) {

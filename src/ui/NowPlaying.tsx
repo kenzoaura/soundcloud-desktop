@@ -32,6 +32,8 @@ export default function NowPlaying() {
       return
     }
     getCoverColor(s.current.artworkUrl).then(setColor)
+    // Only recompute the tint when the artwork changes, not on every store update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.current?.artworkUrl])
 
   useEffect(() => {

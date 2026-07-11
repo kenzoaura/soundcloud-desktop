@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const cache = new Map<string, number[] | null>()
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function clearWaveformCache(): void {
   cache.clear()
 }

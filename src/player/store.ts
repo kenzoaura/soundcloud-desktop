@@ -3,6 +3,7 @@ import type { Track } from '../../electron/sc/types'
 import { AudioEngine } from './audioEngine'
 import { currentTrack, nextIndex, prevIndex, shuffled, type Repeat, type QueueState } from './queue'
 import { pushToast } from '../ui/toast/store'
+import { shouldStopAfterFailure } from './playbackRecovery'
 import { addRecent } from './recents'
 import { currentSettings } from '../settings/store'
 import type { SavedSession } from './session'
@@ -55,6 +56,9 @@ let loadedId: number | null = null
 let pendingSeek: number | null = null
 // Pre-resolved stream URL for the upcoming track, so advancing is instant.
 let preloaded: { id: number; resolved: { url: string; protocol: 'progressive' | 'hls' } } | null = null
+// Tracks that failed to play back-to-back (reset on any successful play). Guards
+// the auto-skip-on-error path from racing silently through the whole queue.
+let consecutiveFailures = 0
 
 export const usePlayer = create<PlayerState>((set, get) => {
   const ensureEngine = () => {
@@ -62,6 +66,19 @@ export const usePlayer = create<PlayerState>((set, get) => {
       engine = new AudioEngine({
         onTime: (p, d) => set({ position: p, duration: d }),
         onEnded: () => void get().next(),
+        // A track died mid-play. Skip to the next one so playback recovers on its
+        // own (this also unsticks Discord, which otherwise keeps the dead track).
+        // Stop after too many fail in a row rather than tearing through the queue.
+        onError: () => {
+          consecutiveFailures += 1
+          if (shouldStopAfterFailure(consecutiveFailures)) {
+            consecutiveFailures = 0
+            set({ isPlaying: false })
+            pushToast('Reprodução interrompida', 'error')
+            return
+          }
+          void get().next()
+        },
       })
     }
     return engine
@@ -108,6 +125,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         set({ position: pendingSeek })
       }
       pendingSeek = null
+      consecutiveFailures = 0 // a real track is playing again; reset the guard
       set({ isPlaying: true })
       addRecent(track)
       prefetchNext()

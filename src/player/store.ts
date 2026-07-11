@@ -7,6 +7,7 @@ import { shouldStopAfterFailure } from './playbackRecovery'
 import { addRecent } from './recents'
 import { currentSettings } from '../settings/store'
 import type { SavedSession } from './session'
+import { loadPlaybackPrefs, savePlaybackPrefs } from './prefs'
 
 interface PlayerState {
   queue: QueueState
@@ -142,15 +143,17 @@ export const usePlayer = create<PlayerState>((set, get) => {
     }
   }
 
+  const prefs = loadPlaybackPrefs()
+
   return {
     queue: { tracks: [], index: 0 },
     current: null,
     isPlaying: false,
     position: 0,
     duration: 0,
-    repeat: 'off',
+    repeat: prefs.repeat,
     volume: 1,
-    shuffle: false,
+    shuffle: prefs.shuffle,
     nowPlayingOpen: false,
     setNowPlaying: (open) => set({ nowPlayingOpen: open }),
     enqueue: (track) => {
@@ -258,13 +261,16 @@ export const usePlayer = create<PlayerState>((set, get) => {
       set({ volume: pos })
     },
     toggleShuffle: () => {
-      const { shuffle, queue } = get()
+      const { shuffle, queue, repeat } = get()
       if (!shuffle) set({ shuffle: true, queue: shuffled(queue.tracks, queue.index) })
       else set({ shuffle: false })
+      savePlaybackPrefs({ shuffle: !shuffle, repeat })
     },
     cycleRepeat: () => {
       const order: Repeat[] = ['off', 'all', 'one']
-      set({ repeat: order[(order.indexOf(get().repeat) + 1) % order.length] })
+      const repeat = order[(order.indexOf(get().repeat) + 1) % order.length]
+      set({ repeat })
+      savePlaybackPrefs({ shuffle: get().shuffle, repeat })
     },
     restore: (s) => {
       loadedId = null // engine empty until the user presses play

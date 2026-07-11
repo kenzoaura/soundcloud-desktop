@@ -117,7 +117,7 @@ export default function PlayerBar() {
               <div className="absolute inset-0 rounded-full bg-white/15" />
               <div
                 className={`absolute inset-y-0 left-0 rounded-full bg-[var(--accent)] ${
-                  dragging ? '' : 'transition-[width] duration-1000 ease-linear'
+                  dragging ? '' : 'transition-[width] duration-200 ease-out'
                 }`}
                 style={{ width: `${pct}%` }}
               />

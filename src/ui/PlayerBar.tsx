@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { SkipBack, SkipForward, Play, Pause, Shuffle, Repeat, Repeat1 } from 'lucide-react'
+import { SkipBack, SkipForward, Play, Pause, Shuffle, Repeat, Repeat1, Heart } from 'lucide-react'
 import { usePlayer } from '../player/store'
 import { getCoverColor, rgbToCss } from '../lib/color'
+import { useTrackLike } from '../lib/useTrackLike'
 import Waveform from './Waveform'
 import VolumeControl from './VolumeControl'
 import QueuePopover from './QueuePopover'
@@ -16,6 +17,7 @@ export default function PlayerBar() {
   const setNowPlaying = usePlayer((st) => st.setNowPlaying)
   const [dragging, setDragging] = useState(false)
   const [tint, setTint] = useState<string>('transparent')
+  const { liked, toggle: toggleLike } = useTrackLike(s.current)
 
   useEffect(() => {
     const url = s.current?.artworkUrl
@@ -35,21 +37,35 @@ export default function PlayerBar() {
       className="h-20 shrink-0 border-t border-[var(--border)] grid grid-cols-[1fr_2fr_1fr] items-center px-4 gap-4 transition-colors duration-500"
       style={{ backgroundColor: 'var(--bg-titlebar)', backgroundImage: `linear-gradient(0deg, ${tint}, ${tint})` }}
     >
-      {/* Now playing — click opens the expanded view */}
-      <button
-        onClick={() => setNowPlaying(true)}
-        className="flex items-center gap-3 min-w-0 text-left group"
-        aria-label="Abrir tocando agora"
-      >
-        <img
-          src={s.current.artworkUrl}
-          className="w-14 h-14 rounded object-cover bg-white/5 group-hover:brightness-110 transition"
-        />
-        <div className="min-w-0">
-          <div className="text-sm truncate group-hover:underline">{s.current.title}</div>
-          <div className="text-xs text-[var(--text-dim)] truncate">{s.current.artist}</div>
-        </div>
-      </button>
+      {/* Now playing — click opens the expanded view; heart likes the track */}
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          onClick={() => setNowPlaying(true)}
+          className="flex items-center gap-3 min-w-0 text-left group"
+          aria-label="Abrir tocando agora"
+        >
+          <img
+            src={s.current.artworkUrl}
+            className="w-14 h-14 rounded object-cover bg-white/5 group-hover:brightness-110 transition"
+          />
+          <div className="min-w-0">
+            <div className="text-sm truncate group-hover:underline">{s.current.title}</div>
+            <div className="text-xs text-[var(--text-dim)] truncate">{s.current.artist}</div>
+          </div>
+        </button>
+        <button
+          onClick={toggleLike}
+          className={`shrink-0 grid place-items-center w-8 h-8 rounded-full transition-colors ${
+            liked
+              ? 'text-[var(--accent)]'
+              : 'text-[var(--text-dim)] hover:text-white hover:bg-white/5'
+          }`}
+          aria-label={liked ? 'Descurtir' : 'Curtir'}
+          title={liked ? 'Descurtir' : 'Curtir'}
+        >
+          <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+        </button>
+      </div>
 
       {/* Controls */}
       <div className="flex flex-col items-center justify-center gap-2 w-full max-w-[540px] mx-auto">

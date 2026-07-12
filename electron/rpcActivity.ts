@@ -30,10 +30,14 @@ export function buildActivity(s: PlayerSnapshot, nowMs: number): RpcActivity {
     largeImageKey: s.artworkUrl,
     largeImageText: 'SoundCloud',
   }
-  // "Open on SoundCloud" button (Discord requires a valid http(s) URL).
+  // Discord allows up to 2 buttons and requires valid http(s) URLs. Show the
+  // track link first (when available), then always a link to this app's repo.
+  const buttons: { label: string; url: string }[] = []
   if (s.url && /^https?:\/\//.test(s.url)) {
-    activity.buttons = [{ label: 'Ouvir no SoundCloud', url: s.url }]
+    buttons.push({ label: 'Ouvir no SoundCloud', url: s.url })
   }
+  buttons.push({ label: 'SoundCloud Desktop', url: 'https://github.com/kenzoaura/soundcloud-desktop' })
+  activity.buttons = buttons
   if (s.isPlaying && s.durationSec > 0) {
     const start = nowMs - Math.floor(s.positionSec * 1000)
     activity.startTimestamp = start

@@ -22,9 +22,18 @@ describe('buildActivity', () => {
     const a = buildActivity({ ...base, url: 'https://soundcloud.com/x/song', isPlaying: true }, 1_000_000)
     expect(a.buttons?.[0]).toEqual({ label: 'Ouvir no SoundCloud', url: 'https://soundcloud.com/x/song' })
   })
-  it('omits buttons without a valid url', () => {
+  it('always includes a SoundCloud Desktop app button, after the track button', () => {
+    const withUrl = buildActivity({ ...base, url: 'https://soundcloud.com/x/song', isPlaying: true }, 1_000_000)
+    expect(withUrl.buttons).toEqual([
+      { label: 'Ouvir no SoundCloud', url: 'https://soundcloud.com/x/song' },
+      { label: 'SoundCloud Desktop', url: 'https://github.com/kenzoaura/soundcloud-desktop' },
+    ])
+  })
+  it('shows just the app button when there is no track url', () => {
     const a = buildActivity({ ...base, isPlaying: true }, 1_000_000)
-    expect(a.buttons).toBeUndefined()
+    expect(a.buttons).toEqual([
+      { label: 'SoundCloud Desktop', url: 'https://github.com/kenzoaura/soundcloud-desktop' },
+    ])
   })
   it('sets start/end timestamps when playing (live bar)', () => {
     const now = 1_000_000

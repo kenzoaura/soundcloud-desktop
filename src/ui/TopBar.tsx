@@ -37,7 +37,9 @@ export default function TopBar() {
     const trimmed = q.trim()
     if (trimmed === urlQ) return
     const id = setTimeout(() => {
-      if (trimmed) navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
+      // Push the first hop onto /search (so Back returns to the origin); replace
+      // while refining an existing query so keystrokes don't flood history.
+      if (trimmed) navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: urlQ !== '' })
     }, 300)
     return () => clearTimeout(id)
   }, [q, urlQ, navigate])

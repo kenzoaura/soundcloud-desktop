@@ -8,3 +8,10 @@ export function moveItem<T>(arr: readonly T[], from: number, to: number): T[] {
   copy.splice(to, 0, moved)
   return copy
 }
+
+// Map a drag (from) plus the hovered row it's dropped on (over — whose top edge
+// is the insertion point) to the destination index for moveItem. Dropping onto a
+// row below the dragged item inserts before that row, i.e. one slot up.
+export function dropIndex(from: number, over: number): number {
+  return from < over ? over - 1 : over
+}

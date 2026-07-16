@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Track } from '../../electron/sc/types'
 import TrackRow from './TrackRow'
+import { dropIndex } from '../lib/array'
 
 export default function TrackList({
   tracks,
@@ -44,8 +45,9 @@ export default function TrackList({
               onDragEnter={() => setOverIndex(i)}
               onDragOver={(e) => e.preventDefault()}
               onDragEnd={() => {
-                if (dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
-                  onReorder(dragIndex, overIndex)
+                if (dragIndex !== null && overIndex !== null) {
+                  const to = dropIndex(dragIndex, overIndex)
+                  if (to !== dragIndex) onReorder(dragIndex, to)
                 }
                 setDragIndex(null)
                 setOverIndex(null)

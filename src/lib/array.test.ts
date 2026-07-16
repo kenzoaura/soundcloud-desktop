@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { moveItem } from './array'
+import { moveItem, dropIndex } from './array'
 
 describe('moveItem', () => {
   it('moves an element forward', () => {
@@ -17,5 +17,17 @@ describe('moveItem', () => {
   it('returns an unchanged copy for out-of-range indices', () => {
     expect(moveItem(['a', 'b'], -1, 0)).toEqual(['a', 'b'])
     expect(moveItem(['a', 'b'], 0, 5)).toEqual(['a', 'b'])
+  })
+})
+
+describe('dropIndex', () => {
+  it('drops before the hovered row when dragging down', () => {
+    expect(dropIndex(0, 2)).toBe(1)
+  })
+  it('drops at the hovered row when dragging up', () => {
+    expect(dropIndex(3, 1)).toBe(1)
+  })
+  it('is a no-op onto itself', () => {
+    expect(dropIndex(2, 2)).toBe(2)
   })
 })

@@ -416,7 +416,13 @@ export class ScApi {
   // Persist a new track order. The caller supplies the FULL ordered id list
   // (a playlist PUT replaces the whole track set).
   async reorderPlaylist(playlistId: number, orderedTrackIds: number[]): Promise<boolean> {
-    return this.putPlaylist(playlistId, { tracks: orderedTrackIds })
+    // The caller passes the desired order of the tracks it can see. Reconcile
+    // with the authoritative server id list so tracks that failed to hydrate in
+    // the UI are never dropped: keep the requested order, then append the rest.
+    const authoritative = await this.playlistTrackIds(playlistId)
+    const requested = orderedTrackIds.filter((id) => authoritative.includes(id))
+    const missing = authoritative.filter((id) => !requested.includes(id))
+    return this.putPlaylist(playlistId, { tracks: [...requested, ...missing] })
   }
 
   async renamePlaylist(playlistId: number, title: string): Promise<boolean> {

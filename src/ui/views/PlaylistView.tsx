@@ -10,7 +10,8 @@ import { usePlayer } from '../../player/store'
 import { usePlaylistUi, notifyPlaylistsChanged } from '../playlist/store'
 import { useToggleSync } from '../useToggleSync'
 import { pushToast } from '../toast/store'
-import type { Playlist } from '../../../electron/sc/types'
+import { moveItem } from '../../lib/array'
+import type { Playlist, Track } from '../../../electron/sc/types'
 
 function LikeButton({ playlist, initial }: { playlist: Playlist; initial: boolean }) {
   const [pop, setPop] = useState(0)
@@ -60,9 +61,14 @@ export default function PlaylistView() {
   const openRename = usePlaylistUi((s) => s.openRename)
   const playQueue = usePlayer((s) => s.playQueue)
   const playShuffled = usePlayer((s) => s.playShuffled)
-  const tracks = data?.tracks ?? []
+  const [localTracks, setLocalTracks] = useState<Track[] | null>(null)
+  const tracks = localTracks ?? data?.tracks ?? []
   const isLiked = (liked.data ?? []).some((p) => p.id === pid)
   const isOwner = (own.data ?? []).some((p) => p.id === pid)
+
+  useEffect(() => {
+    setLocalTracks(null)
+  }, [data])
 
   // Reload when a track is removed here or the playlist is renamed elsewhere.
   useEffect(() => {
@@ -86,6 +92,17 @@ export default function PlaylistView() {
       pushToast('Playlist excluída')
       navigate('/')
     } else pushToast('Não consegui excluir', 'error')
+  }
+
+  const onReorder = async (from: number, to: number) => {
+    const prev = tracks
+    const next = moveItem(prev, from, to)
+    setLocalTracks(next)
+    const ok = await window.sc.reorderPlaylist(pid, next.map((t) => t.id)).catch(() => false)
+    if (!ok) {
+      setLocalTracks(prev)
+      pushToast('Não consegui reordenar', 'error')
+    }
   }
 
   return (
@@ -129,7 +146,12 @@ export default function PlaylistView() {
       ) : error ? (
         <ErrorState onRetry={reload} />
       ) : (
-        <TrackList tracks={tracks} header playlistId={isOwner ? pid : undefined} />
+        <TrackList
+          tracks={tracks}
+          header
+          playlistId={isOwner ? pid : undefined}
+          onReorder={isOwner ? onReorder : undefined}
+        />
       )}
     </section>
   )

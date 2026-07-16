@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Track } from '../../electron/sc/types'
 import TrackRow from './TrackRow'
 
@@ -6,12 +7,17 @@ export default function TrackList({
   header = false,
   liked = false,
   playlistId,
+  onReorder,
 }: {
   tracks: Track[]
   header?: boolean
   liked?: boolean
   playlistId?: number
+  onReorder?: (from: number, to: number) => void
 }) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
+
   if (tracks.length === 0) {
     return <div className="p-6 text-sm text-[var(--text-muted)]">Nada aqui ainda.</div>
   }
@@ -26,9 +32,36 @@ export default function TrackList({
         </div>
       )}
       <div className="flex flex-col gap-0.5">
-        {tracks.map((t, i) => (
-          <TrackRow key={`${t.id}-${i}`} tracks={tracks} index={i} liked={liked} playlistId={playlistId} />
-        ))}
+        {tracks.map((t, i) =>
+          onReorder ? (
+            <div
+              key={`${t.id}-${i}`}
+              draggable
+              onDragStart={(e) => {
+                setDragIndex(i)
+                e.dataTransfer.effectAllowed = 'move'
+              }}
+              onDragEnter={() => setOverIndex(i)}
+              onDragOver={(e) => e.preventDefault()}
+              onDragEnd={() => {
+                if (dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
+                  onReorder(dragIndex, overIndex)
+                }
+                setDragIndex(null)
+                setOverIndex(null)
+              }}
+              className={`rounded-md ${dragIndex === i ? 'opacity-30' : ''} ${
+                overIndex === i && dragIndex !== null && dragIndex !== i
+                  ? 'border-t-2 border-[var(--accent)]'
+                  : 'border-t-2 border-transparent'
+              }`}
+            >
+              <TrackRow tracks={tracks} index={i} liked={liked} playlistId={playlistId} />
+            </div>
+          ) : (
+            <TrackRow key={`${t.id}-${i}`} tracks={tracks} index={i} liked={liked} playlistId={playlistId} />
+          ),
+        )}
       </div>
     </div>
   )

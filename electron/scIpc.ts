@@ -58,6 +58,9 @@ export function registerScIpc(api: ScApi, clientId: ClientId, session: AuthSessi
   ipcMain.handle(IPC.SC_REMOVE_FROM_PLAYLIST, (_e, playlistId: number, trackId: number) =>
     api.removeFromPlaylist(playlistId, trackId),
   )
+  ipcMain.handle(IPC.SC_REORDER_PLAYLIST, (_e, playlistId: number, orderedTrackIds: number[]) =>
+    api.reorderPlaylist(playlistId, orderedTrackIds),
+  )
   ipcMain.handle(IPC.SC_RENAME_PLAYLIST, (_e, id: number, title: string) => api.renamePlaylist(id, title))
   ipcMain.handle(IPC.SC_DELETE_PLAYLIST, (_e, id: number) => api.deletePlaylist(id))
   ipcMain.handle(IPC.SC_PLAYLIST, (_e, id: number) => api.playlist(id))

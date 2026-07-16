@@ -25,6 +25,7 @@ interface ScBridge {
   createPlaylist(title: string, isPublic: boolean, trackIds?: number[]): Promise<ScPlaylist | null>
   addToPlaylist(playlistId: number, trackId: number): Promise<boolean>
   removeFromPlaylist(playlistId: number, trackId: number): Promise<boolean>
+  reorderPlaylist(playlistId: number, orderedTrackIds: number[]): Promise<boolean>
   renamePlaylist(id: number, title: string): Promise<boolean>
   deletePlaylist(id: number): Promise<boolean>
   playlist(id: number): Promise<{ playlist: ScPlaylist; tracks: ScTrack[] } | null>

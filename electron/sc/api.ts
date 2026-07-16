@@ -413,6 +413,12 @@ export class ScApi {
     return this.putPlaylist(playlistId, { tracks: ids })
   }
 
+  // Persist a new track order. The caller supplies the FULL ordered id list
+  // (a playlist PUT replaces the whole track set).
+  async reorderPlaylist(playlistId: number, orderedTrackIds: number[]): Promise<boolean> {
+    return this.putPlaylist(playlistId, { tracks: orderedTrackIds })
+  }
+
   async renamePlaylist(playlistId: number, title: string): Promise<boolean> {
     return this.putPlaylist(playlistId, { title })
   }

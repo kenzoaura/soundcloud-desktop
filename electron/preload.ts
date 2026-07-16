@@ -23,6 +23,8 @@ contextBridge.exposeInMainWorld('sc', {
     ipcRenderer.invoke(IPC.SC_ADD_TO_PLAYLIST, playlistId, trackId),
   removeFromPlaylist: (playlistId: number, trackId: number) =>
     ipcRenderer.invoke(IPC.SC_REMOVE_FROM_PLAYLIST, playlistId, trackId),
+  reorderPlaylist: (playlistId: number, orderedTrackIds: number[]) =>
+    ipcRenderer.invoke(IPC.SC_REORDER_PLAYLIST, playlistId, orderedTrackIds),
   renamePlaylist: (id: number, title: string) => ipcRenderer.invoke(IPC.SC_RENAME_PLAYLIST, id, title),
   deletePlaylist: (id: number) => ipcRenderer.invoke(IPC.SC_DELETE_PLAYLIST, id),
   playlist: (id: number) => ipcRenderer.invoke(IPC.SC_PLAYLIST, id),

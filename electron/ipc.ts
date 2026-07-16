@@ -13,6 +13,7 @@ export const IPC = {
   SC_CREATE_PLAYLIST: 'sc:createPlaylist',
   SC_ADD_TO_PLAYLIST: 'sc:addToPlaylist',
   SC_REMOVE_FROM_PLAYLIST: 'sc:removeFromPlaylist',
+  SC_REORDER_PLAYLIST: 'sc:reorderPlaylist',
   SC_RENAME_PLAYLIST: 'sc:renamePlaylist',
   SC_DELETE_PLAYLIST: 'sc:deletePlaylist',
   SC_PLAYLIST: 'sc:playlist',

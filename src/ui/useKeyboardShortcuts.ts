@@ -7,10 +7,16 @@ import { toggleCurrentLike } from '../lib/likeActions'
 export function useKeyboardShortcuts(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return
       const action = shortcutAction(e.code, e.ctrlKey)
       if (!action) return
+      // Ctrl+K must work even while typing (including inside the search box).
+      if (action.type === 'focus-search') {
+        e.preventDefault()
+        window.dispatchEvent(new CustomEvent('sc:focus-search'))
+        return
+      }
+      const el = e.target as HTMLElement | null
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return
       e.preventDefault()
       const s = usePlayer.getState()
       switch (action.type) {

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Search, Minus, Square, X } from 'lucide-react'
 import Logo from './Logo'
 import AccountChip from './AccountChip'
@@ -10,7 +10,37 @@ const noDrag = { WebkitAppRegion: 'no-drag' } as React.CSSProperties
 export default function TopBar() {
   const navigate = useNavigate()
   const t = useT()
-  const [q, setQ] = useState('')
+  const [params] = useSearchParams()
+  const urlQ = params.get('q') ?? ''
+  const [q, setQ] = useState(urlQ)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Keep the box in sync when the URL query changes (e.g. navigating to /search).
+  useEffect(() => {
+    setQ(urlQ)
+  }, [urlQ])
+
+  // Ctrl+K (dispatched by the global shortcut handler) focuses + selects the box.
+  useEffect(() => {
+    const focus = () => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
+    window.addEventListener('sc:focus-search', focus)
+    return () => window.removeEventListener('sc:focus-search', focus)
+  }, [])
+
+  // Live search: debounce navigation as the user types (replace, so keystrokes
+  // don't flood history). Only navigates when the text actually differs from the
+  // URL, so syncing the box from the URL doesn't re-trigger a navigation.
+  useEffect(() => {
+    const trimmed = q.trim()
+    if (trimmed === urlQ) return
+    const id = setTimeout(() => {
+      if (trimmed) navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
+    }, 300)
+    return () => clearTimeout(id)
+  }, [q, urlQ, navigate])
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +85,7 @@ export default function TopBar() {
           <div className="relative">
             <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-dim)]" />
             <input
+              ref={inputRef}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={t('search.placeholder')}

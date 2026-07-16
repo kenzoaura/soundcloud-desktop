@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Play } from 'lucide-react'
+import { Play, Shuffle } from 'lucide-react'
 import { getCoverColor, rgbToCss, type RGB } from '../lib/color'
 
 export default function CollectionHeader({
@@ -10,6 +10,7 @@ export default function CollectionHeader({
   meta,
   rounded = 'rounded-lg',
   onPlay,
+  onShufflePlay,
   creatorId,
   creatorName,
 }: {
@@ -19,6 +20,7 @@ export default function CollectionHeader({
   meta?: string
   rounded?: string
   onPlay?: () => void
+  onShufflePlay?: () => void
   creatorId?: number
   creatorName?: string
 }) {
@@ -60,13 +62,27 @@ export default function CollectionHeader({
           ) : (
             meta && <div className="text-sm text-[var(--text-dim)] mt-3">{meta}</div>
           )}
-          {onPlay && (
-            <button
-              onClick={onPlay}
-              className="mt-5 inline-flex items-center gap-2 pl-4 pr-5 py-2.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold shadow-lg hover:scale-[1.03] active:scale-95 transition"
-            >
-              <Play size={18} fill="currentColor" /> Tocar
-            </button>
+          {(onPlay || onShufflePlay) && (
+            <div className="mt-5 flex items-center gap-3">
+              {onPlay && (
+                <button
+                  onClick={onPlay}
+                  className="inline-flex items-center gap-2 pl-4 pr-5 py-2.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold shadow-lg hover:scale-[1.03] active:scale-95 transition"
+                >
+                  <Play size={18} fill="currentColor" /> Tocar
+                </button>
+              )}
+              {onShufflePlay && (
+                <button
+                  onClick={onShufflePlay}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/25 text-white font-semibold hover:border-white active:scale-95 transition"
+                  title="Tocar aleatório"
+                  aria-label="Tocar aleatório"
+                >
+                  <Shuffle size={18} /> Aleatório
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

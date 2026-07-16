@@ -17,6 +17,7 @@ export default function MixView() {
   const ids = state?.trackIds ?? []
   const { data, loading } = useAsync(() => window.sc.tracksByIds(ids.slice(0, 50)), [state?.title, ids.length])
   const playQueue = usePlayer((s) => s.playQueue)
+  const playShuffled = usePlayer((s) => s.playShuffled)
   const tracks = data ?? []
 
   return (
@@ -27,6 +28,7 @@ export default function MixView() {
         title={state?.title ?? 'Mix'}
         meta={tracks.length > 0 ? `${tracks.length} faixas` : undefined}
         onPlay={tracks.length > 0 ? () => void playQueue(tracks, 0) : undefined}
+        onShufflePlay={tracks.length > 0 ? () => void playShuffled(tracks) : undefined}
       />
       {loading ? (
         <TrackListSkeleton />

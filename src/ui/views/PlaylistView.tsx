@@ -59,6 +59,7 @@ export default function PlaylistView() {
   const own = useAsync(() => window.sc.playlists(), [])
   const openRename = usePlaylistUi((s) => s.openRename)
   const playQueue = usePlayer((s) => s.playQueue)
+  const playShuffled = usePlayer((s) => s.playShuffled)
   const tracks = data?.tracks ?? []
   const isLiked = (liked.data ?? []).some((p) => p.id === pid)
   const isOwner = (own.data ?? []).some((p) => p.id === pid)
@@ -97,6 +98,7 @@ export default function PlaylistView() {
         creatorName={data?.playlist.user}
         meta={data ? `${tracks.length} faixas` : undefined}
         onPlay={tracks.length > 0 ? () => void playQueue(tracks, 0) : undefined}
+        onShufflePlay={tracks.length > 0 ? () => void playShuffled(tracks) : undefined}
       />
       {data && (
         <div className="px-6 pb-2 flex items-center gap-3">

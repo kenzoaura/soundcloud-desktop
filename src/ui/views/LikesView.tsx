@@ -12,6 +12,7 @@ import type { Track } from '../../../electron/sc/types'
 export default function LikesView() {
   const { data, loading, error, reload } = useAsync(() => window.sc.likes(50), [])
   const playQueue = usePlayer((s) => s.playQueue)
+  const playShuffled = usePlayer((s) => s.playShuffled)
   const [tracks, setTracks] = useState<Track[]>([])
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function LikesView() {
         title="Curtidas"
         meta={tracks.length > 0 ? `${tracks.length} faixas` : undefined}
         onPlay={tracks.length > 0 ? () => void playQueue(tracks, 0) : undefined}
+        onShufflePlay={tracks.length > 0 ? () => void playShuffled(tracks) : undefined}
       />
       {loading ? (
         <TrackListSkeleton />

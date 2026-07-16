@@ -6,6 +6,7 @@ export type ShortcutAction =
   | { type: 'volume'; delta: number }
   | { type: 'like' }
   | { type: 'mute' }
+  | { type: 'focus-search' }
   | null
 
 // Pure mapping from a keyboard event's code (+ ctrl) to a player action, kept
@@ -26,6 +27,8 @@ export function shortcutAction(code: string, ctrl: boolean): ShortcutAction {
       return { type: 'like' }
     case 'KeyM':
       return { type: 'mute' }
+    case 'KeyK':
+      return ctrl ? { type: 'focus-search' } : null
     default:
       return null
   }

@@ -22,4 +22,8 @@ describe('shortcutAction', () => {
   it('returns null for unmapped keys', () => {
     expect(shortcutAction('KeyZ', false)).toBeNull()
   })
+  it('maps Ctrl+K to focus-search, and plain K to nothing', () => {
+    expect(shortcutAction('KeyK', true)).toEqual({ type: 'focus-search' })
+    expect(shortcutAction('KeyK', false)).toBeNull()
+  })
 })

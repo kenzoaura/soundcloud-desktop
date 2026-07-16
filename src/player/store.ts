@@ -19,6 +19,7 @@ interface PlayerState {
   volume: number
   shuffle: boolean
   playQueue: (tracks: Track[], startIndex: number) => Promise<void>
+  playShuffled: (tracks: Track[]) => Promise<void>
   toggle: () => void
   next: () => Promise<void>
   previous: () => Promise<void>
@@ -197,6 +198,17 @@ export const usePlayer = create<PlayerState>((set, get) => {
       pendingSeek = null // explicit user action; don't resume a restored position
       set({ queue: { tracks, index: startIndex } })
       const t = currentTrack({ tracks, index: startIndex })
+      if (t) await loadAndPlay(t)
+    },
+    playShuffled: async (tracks) => {
+      if (tracks.length === 0) return
+      pendingSeek = null // explicit user action; don't resume a restored position
+      // Random first track, rest shuffled after it.
+      const start = Math.floor(Math.random() * tracks.length)
+      const q = shuffled(tracks, start)
+      savePlaybackPrefs({ shuffle: true, repeat: get().repeat })
+      set({ shuffle: true, queue: q })
+      const t = currentTrack(q)
       if (t) await loadAndPlay(t)
     },
     toggle: () => {
